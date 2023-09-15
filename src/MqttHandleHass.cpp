@@ -208,7 +208,7 @@ void MqttHandleHassClass::publishInverterNumber(
     String cmdTopic = MqttSettings.getPrefix() + serial + "/" + commandTopic;
     String statTopic = MqttSettings.getPrefix() + serial + "/" + stateTopic;
 
-    DynamicJsonDocument root(1024);
+    DynamicJsonDocument root(2048);
     root["name"] = String(inv->name()) + " " + caption;
     root["uniq_id"] = serial + "_" + buttonId;
     if (strcmp(icon, "")) {
@@ -224,9 +224,12 @@ void MqttHandleHassClass::publishInverterNumber(
     JsonObject deviceObj = root.createNestedObject("dev");
     createDeviceInfo(deviceObj, inv);
 
-    char buffer[1024];
-    int byte = serializeJson(root, buffer);
-    MessageOutput.printf("[MqttHandleHassClass::publishInverterNumber] size of buffer: %d\r\n", byte);
+    char buffer[2048];
+    size_t byte = serializeJson(root, buffer);
+    MessageOutput.printf("[MqttHandleHassClass::publishInverterNumber] size of buffer: %d (%d) \r\n", byte, measureJson(root));
+    MessageOutput.printf("[MqttHandleHassClass::publishInverterNumber] name: \"%s\", id: \"%s\"\r\n", inv->name(), buttonId.c_str() );
+    MessageOutput.printf("[MqttHandleHassClass::publishInverterNumber] configTopic: \"%s\", statTopic: \"%s\"\r\n", configTopic.c_str(), statTopic.c_str() );
+    MessageOutput.printf("[MqttHandleHassClass::publishInverterNumber] cmdTopic: \"%s\", serial: \"%s\"\r\n", cmdTopic.c_str(), serial.c_str() );
     publish(configTopic, buffer);
 }
 

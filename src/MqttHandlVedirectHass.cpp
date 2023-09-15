@@ -85,7 +85,7 @@ void MqttHandleVedirectHassClass::publishConfig()
 
 void MqttHandleVedirectHassClass::publishSensor(const char* caption, const char* icon, const char* subTopic, const char* deviceClass, const char* stateClass, const char* unitOfMeasurement )
 {
-    MessageOutput.printf("[MqttHandleVedirectHassClass::publishSensor] free heap=%d caption=\"%s\", icon=\"%s\", subTopic=\"%s\", deviceClass=\"%s\", stateClass=\"%s\", unitOfMeasurement=\"%s\",\r\n", ESP.getFreeHeap(), caption, icon, subTopic, deviceClass, stateClass, unitOfMeasurement);
+    MessageOutput.printf("[MqttHandleVedirectHassClass::publishSensor] free heap=%d caption=\"%s\", icon=\"%s\", subTopic=\"%s\", deviceClass=\"%s\", stateClass=\"%s\", unitOfMeasurement=\"%s\",\r\n", ESP.getFreeHeap(), caption, icon != NULL ? icon : "", subTopic, deviceClass != NULL ? deviceClass : "", stateClass != NULL ? stateClass : "", unitOfMeasurement != NULL ? unitOfMeasurement : "");
     String serial = VeDirect.veFrame.SER;
 
     String sensorId = caption;
