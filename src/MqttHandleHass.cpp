@@ -84,6 +84,7 @@ void MqttHandleHassClass::publishConfig()
 
 void MqttHandleHassClass::publishField(std::shared_ptr<InverterAbstract> inv, ChannelType_t type, ChannelNum_t channel, byteAssign_fieldDeviceClass_t fieldType, bool clear)
 {
+    MessageOutput.printf("[MqttHandleHassClass::publishField] free heap=%d \r\n", ESP.getFreeHeap());
     if (!inv->Statistics()->hasChannelFieldValue(type, channel, fieldType.fieldId)) {
         return;
     }

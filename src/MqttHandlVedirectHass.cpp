@@ -54,6 +54,9 @@ void MqttHandleVedirectHassClass::publishConfig()
         return;
     }
 
+    MessageOutput.printf("[MqttHandleVedirectHassClass::publishConfig] free heap=%d \r\n", ESP.getFreeHeap());
+  
+
     // device info
     publishBinarySensor("MPPT load output state", "mdi:export", "LOAD", "ON", "OFF");
     publishSensor("MPPT serial number", "mdi:counter", "SER");
