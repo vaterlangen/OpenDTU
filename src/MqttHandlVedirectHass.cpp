@@ -126,7 +126,7 @@ void MqttHandleVedirectHassClass::publishSensor(const char* caption, const char*
         root[F("stat_cla")] = stateClass;
     }
 
-    char buffer[512];
+    char buffer[1024];
     serializeJson(root, buffer);
     publish(configTopic, buffer);
 
@@ -165,7 +165,7 @@ void MqttHandleVedirectHassClass::publishBinarySensor(const char* caption, const
     JsonObject deviceObj = root.createNestedObject("dev");
     createDeviceInfo(deviceObj);
 
-    char buffer[512];
+    char buffer[1024];
     serializeJson(root, buffer);
     publish(configTopic, buffer);
 }
