@@ -127,7 +127,8 @@ void MqttHandleVedirectHassClass::publishSensor(const char* caption, const char*
     }
 
     char buffer[1024];
-    serializeJson(root, buffer);
+    int byte = serializeJson(root, buffer);
+    MessageOutput.printf("[MqttHandleVedirectHassClass::publishSensor] size of buffer: %d\r\n", byte);
     publish(configTopic, buffer);
 
 }
@@ -165,8 +166,10 @@ void MqttHandleVedirectHassClass::publishBinarySensor(const char* caption, const
     JsonObject deviceObj = root.createNestedObject("dev");
     createDeviceInfo(deviceObj);
 
-    char buffer[1024];
-    serializeJson(root, buffer);
+    char buffer[1024];;
+    
+    int byte = serializeJson(root, buffer);
+    MessageOutput.printf("[MqttHandleVedirectHassClass::publishBinarySensor] size of buffer: %d\r\n", byte);
     publish(configTopic, buffer);
 }
 

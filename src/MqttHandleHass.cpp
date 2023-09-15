@@ -6,6 +6,7 @@
 #include "MqttHandleInverter.h"
 #include "MqttSettings.h"
 #include "NetworkSettings.h"
+#include "MessageOutput.h"
 
 MqttHandleHassClass MqttHandleHass;
 
@@ -144,7 +145,8 @@ void MqttHandleHassClass::publishField(std::shared_ptr<InverterAbstract> inv, Ch
         }
 
         char buffer[1024];
-        serializeJson(root, buffer);
+        int byte = serializeJson(root, buffer);
+        MessageOutput.printf("[MqttHandleHassClass::publishField] size of buffer: %d\r\n", byte);
         publish(configTopic, buffer);
     } else {
         publish(configTopic, "");
@@ -182,7 +184,8 @@ void MqttHandleHassClass::publishInverterButton(std::shared_ptr<InverterAbstract
     createDeviceInfo(deviceObj, inv);
 
     char buffer[1024];
-    serializeJson(root, buffer);
+    int byte = serializeJson(root, buffer);
+    MessageOutput.printf("[MqttHandleHassClass::publishInverterButton] size of buffer: %d\r\n", byte);
     publish(configTopic, buffer);
 }
 
@@ -221,7 +224,8 @@ void MqttHandleHassClass::publishInverterNumber(
     createDeviceInfo(deviceObj, inv);
 
     char buffer[1024];
-    serializeJson(root, buffer);
+    int byte = serializeJson(root, buffer);
+    MessageOutput.printf("[MqttHandleHassClass::publishInverterNumber] size of buffer: %d\r\n", byte);
     publish(configTopic, buffer);
 }
 
@@ -250,7 +254,8 @@ void MqttHandleHassClass::publishInverterBinarySensor(std::shared_ptr<InverterAb
     createDeviceInfo(deviceObj, inv);
 
     char buffer[1024];
-    serializeJson(root, buffer);
+    int byte = serializeJson(root, buffer);
+    MessageOutput.printf("[MqttHandleHassClass::publishInverterBinarySensor] size of buffer: %d\r\n", byte);
     publish(configTopic, buffer);
 }
 
