@@ -212,8 +212,9 @@ void MqttHandleHassClass::publishInverterNumber(
     String statTopic = MqttSettings.getPrefix() + serial + "/" + stateTopic;
 
     DynamicJsonDocument root(2048);
-    root["name"] = String(inv->name()) + " " + caption;
 
+    root["name"] = String(inv->name()) + " " + caption;
+    Serial.printf("[MqttHandleHassClass::publishInverterNumber] root capacity of : %d \r\n", root.capacity());
     byte = serializeJson(root, buffer);
     MessageOutput.printf("[MqttHandleHassClass::publishInverterNumber] size of buffer(name): %d (%d) \r\n", byte, measureJson(root));
     Serial.println(buffer);
