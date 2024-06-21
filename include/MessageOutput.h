@@ -2,13 +2,12 @@
 #pragma once
 
 #include <AsyncWebSocket.h>
+#include <HardwareSerial.h>
+#include <Stream.h>
 #include <TaskSchedulerDeclarations.h>
-#include <Print.h>
-#include <freertos/task.h>
 #include <mutex>
-#include <vector>
-#include <unordered_map>
-#include <queue>
+
+#define BUFFER_SIZE 500
 
 class MessageOutputClass : public Print {
 public:
@@ -23,19 +22,13 @@ private:
 
     Task _loopTask;
 
-    using message_t = std::vector<uint8_t>;
-
-    // we keep a buffer for every task and only write complete lines to the
-    // serial output and then move them to be pushed through the websocket.
-    // this way we prevent mangling of messages from different contexts.
-    std::unordered_map<TaskHandle_t, message_t> _task_messages;
-    std::queue<message_t> _lines;
-
     AsyncWebSocket* _ws = nullptr;
+    char _buffer[BUFFER_SIZE];
+    uint16_t _buff_pos = 0;
+    uint32_t _lastSend = 0;
+    bool _forceSend = false;
 
     std::mutex _msgLock;
-
-    void serialWrite(message_t const& m);
 };
 
 extern MessageOutputClass MessageOutput;

@@ -62,6 +62,7 @@ void WebApiSysstatusClass::onSystemStatus(AsyncWebServerRequest* request)
     root["cfgsavecount"] = Configuration.get().Cfg.SaveCount;
 
     char version[16];
+    auto CONFIG_VERSION = Configuration.get().Cfg.Version;
     snprintf(version, sizeof(version), "%d.%d.%d", CONFIG_VERSION >> 24 & 0xff, CONFIG_VERSION >> 16 & 0xff, CONFIG_VERSION >> 8 & 0xff);
     root["config_version"] = version;
     root["git_hash"] = __COMPILED_GIT_HASH__;

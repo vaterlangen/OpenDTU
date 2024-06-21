@@ -60,7 +60,6 @@ private:
     void loop();
     void setHostname();
     void setStaticIp();
-    void handleMDNS();
     void setupMode();
     void NetworkEvent(const WiFiEvent_t event);
 
