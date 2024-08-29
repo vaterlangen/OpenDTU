@@ -690,6 +690,7 @@
         "ZendureMinSoc": "Minimaler Ladezustand",
         "ZendureMaxSoc": "Maximaler Ladezustand",
         "ZendureBypassMode": "Bypass Modus",
+        "ZendureBypassModeAutomatic": "Automatisch",
         "ZendureMaxOutput": "Limitierung Ausgangsleistung",
         "PollingInterval": "Abfrageintervall",
         "Seconds": "@:base.Seconds",

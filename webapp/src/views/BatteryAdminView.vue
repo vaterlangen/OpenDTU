@@ -188,7 +188,7 @@
                                 v-model="batteryConfigList.zendure_bypass_mode"
                             >
                                 <option v-for="u in zendureBypassModeList" :key="u.key" :value="u.key">
-                                    {{ u.value }}
+                                    {{ $t(`batteryadmin.ZendureBypassMode` + u.value) }}
                                 </option>
                             </select>
                         </div>

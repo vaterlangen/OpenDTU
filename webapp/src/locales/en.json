@@ -693,6 +693,7 @@
         "ZendureMinSoc": "Minimum SoC",
         "ZendureMaxSoc": "Maximum SoC",
         "ZendureBypassMode": "Bypass mode",
+        "ZendureBypassModeAutomatic": "Automatic",
         "ZendureMaxOutput": "Maximum output power",
         "PollingInterval": "Polling Interval",
         "Seconds": "@:base.Seconds",
