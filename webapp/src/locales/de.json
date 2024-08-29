@@ -1015,7 +1015,7 @@
         "bypassMode": "Bypass Modus",
         "bypassState": "Bypass Status",
         "heatState": "Batterieheizung",
-        "autoRecover": "Automatische Wiederhersteullung",
+        "autoRecover": "Automatischer Wiederanlauf",
         "autoShutdown": "Automatisches Herunterfahren",
         "buzzer": "Integrierter Summer",
         "batteries": "Anzahl installierter Batterien",
@@ -1023,12 +1023,10 @@
         "discharging": "Entladen",
         "idle": "Leerlauf",
         "invalid": "Ungültig",
-        "deactivated": "Deaktiviert",
-        "activated": "Aktiviert",
         "enabled": "Aktiviert",
         "disabled": "Deaktiviert",
-        "alwaysoff": "Dauerhaft AUS",
-        "alwayson": "Dauerhaft EIN",
+        "alwaysoff": "Dauerhaft Ausgeschaltet",
+        "alwayson": "Dauerhaft Eingeschaltet",
         "efficiency": "Wirkungsgrad"
     }
 }

@@ -1027,8 +1027,6 @@
         "discharging": "Discharging",
         "idle": "Idle",
         "invalid": "Invalid",
-        "deactivated": "Deactivated",
-        "activated": "Activated",
         "enabled": "Enabled",
         "disabled": "Disabled",
         "alwaysoff": "Always Off",

@@ -843,8 +843,8 @@ void ZendureBatteryStats::getLiveViewData(JsonVariant& root) const {
 
     addLiveViewTextValue(root, "state", getStateString());
     addLiveViewTextValue(root, "bypassMode", getBypassModeString());
-    addLiveViewTextValue(root, "bypassState", _bypass_state ? "activated" : "deactivated");
-    addLiveViewTextValue(root, "heatState", _heat_state ? "activated" : "deactivated");
+    addLiveViewTextValue(root, "bypassState", _bypass_state ? "enabled" : "disabled");
+    addLiveViewTextValue(root, "heatState", _heat_state ? "enabled" : "disabled");
     addLiveViewTextValue(root, "autoRecover", _auto_recover ? "enabled" : "disabled");
     addLiveViewTextValue(root, "autoShutdown", _auto_shutdown ? "enabled" : "disabled");
     addLiveViewTextValue(root, "buzzer", _buzzer ? "enabled" : "disabled");
