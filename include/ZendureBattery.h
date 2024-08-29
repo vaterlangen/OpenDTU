@@ -30,10 +30,10 @@ private:
     bool _verboseLogging = false;
 
     uint32_t _updateRateMs;
-    unsigned long _nextUpdate;
+    uint64_t _nextUpdate;
 
     uint32_t _timesyncRateMs;
-    unsigned long _nextTimesync;
+    uint64_t _nextTimesync;
 
     String _deviceId;
 

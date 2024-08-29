@@ -278,7 +278,7 @@ class ZendureBatteryStats : public BatteryStats {
         friend class ZendureBatteryStats;
 
         public:
-            ZendurePackStats(String serial){ _serial = serial; }
+            explicit ZendurePackStats(String serial){ _serial = serial; }
             void update(JsonObjectConst packData, unsigned int ms);
             bool isCharging() const { return  _state == 2; };
             bool isDischarging() const { return  _state == 1; };
@@ -328,7 +328,7 @@ class ZendureBatteryStats : public BatteryStats {
         void updatePackData(String serial, JsonObjectConst packData, unsigned int ms);
         void update(JsonObjectConst props, unsigned int ms);
         uint16_t getCapacity() const { return _capacity; };
-        uint16_t getAvailableCapacity() const { return getCapacity() * float(_soc_max - _soc_min)/100; };
+        uint16_t getAvailableCapacity() const { return getCapacity() * (static_cast<float>(_soc_max - _soc_min) / 100.0); };
 
     private:
         std::string getBypassModeString() const;
