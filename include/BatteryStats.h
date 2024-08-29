@@ -270,3 +270,115 @@ class MqttBatteryStats : public BatteryStats {
         // voltage (if available) is already displayed at the top.
         void getLiveViewData(JsonVariant& root) const final { }
 };
+
+class ZendureBatteryStats : public BatteryStats {
+    friend class ZendureBattery;
+
+    class ZendurePackStats {
+        friend class ZendureBatteryStats;
+
+        public:
+            ZendurePackStats(String serial){ _serial = serial; }
+            void update(JsonObjectConst packData, unsigned int ms);
+            bool isCharging() const { return  _state == 2; };
+            bool isDischarging() const { return  _state == 1; };
+            uint16_t getCapacity() const { return 1920; }
+
+        protected:
+            bool hasAlarmMaxTemp() const { return _cell_temperature_max >= 45; };
+            bool hasAlarmMinTemp() const { return _cell_temperature_max <= (isCharging() ? 0 : -20); };
+            bool hasAlarmLowSoC() const { return _soc_level < 5; }
+            bool hasAlarmLowVoltage() const { return _voltage_total <= 40.0; }
+            bool hasAlarmHighVoltage() const { return _voltage_total >= 58.4; }
+
+            String _serial;
+            uint32_t _version;
+            uint16_t _cell_voltage_min;
+            uint16_t _cell_voltage_max;
+            uint16_t _cell_voltage_spread;
+            float _cell_temperature_max;
+            float _voltage_total;
+            float _current;
+            int16_t _power;
+            uint8_t _soc_level;
+            uint8_t _state;
+
+        private:
+            uint32_t _lastUpdateTimestamp = 0;
+            uint32_t _totalVoltageTimestamp = 0;
+            uint32_t _totalCurrentTimestamp = 0;
+
+    };
+
+    public:
+        virtual ~ZendureBatteryStats(){
+            for (const auto& [key, item] : _packData){
+                delete item;
+            }
+            _packData.clear();
+        }
+        void mqttPublish() const;
+        void getLiveViewData(JsonVariant& root) const;
+
+        bool isCharging() const { return  _state == 1; };
+        bool isDischarging() const { return  _state == 2; };
+
+    protected:
+        std::optional<ZendureBatteryStats::ZendurePackStats*> getPackData(String serial) const;
+        void updatePackData(String serial, JsonObjectConst packData, unsigned int ms);
+        void update(JsonObjectConst props, unsigned int ms);
+        uint16_t getCapacity() const { return _capacity; };
+        uint16_t getAvailableCapacity() const { return getCapacity() * float(_soc_max - _soc_min)/100; };
+
+    private:
+        std::string getBypassModeString() const;
+        std::string getStateString() const;
+        void calculateEfficiency();
+        void calculateAggregatedPackData();
+
+        void setManuafacture(const char* manufacture) {
+            _manufacturer = String(manufacture);
+        }
+
+        std::map<String, ZendurePackStats*> _packData = std::map<String, ZendurePackStats*>();
+
+        float _cellTemperature;
+        uint16_t _cellMinMilliVolt;
+        uint16_t _cellMaxMilliVolt;
+        uint16_t _cellDeltaMilliVolt;
+
+        float _soc_max;
+        float _soc_min;
+
+        uint16_t _inverse_max;
+        uint16_t _input_limit;
+        uint16_t _output_limit;
+
+        float _efficiency = 0.0;
+        uint16_t _capacity;
+        uint16_t _charge_power;
+        uint16_t _discharge_power;
+        uint16_t _output_power;
+        uint16_t _input_power;
+        uint16_t _solar_power_1;
+        uint16_t _solar_power_2;
+
+        uint16_t _remain_out_time;
+        uint16_t _remain_in_time;
+
+        uint8_t _state;
+        uint8_t _num_batteries;
+        uint8_t _bypass_mode;
+        bool _bypass_state;
+        bool _auto_recover;
+        bool _heat_state;
+        bool _auto_shutdown;
+        bool _buzzer;
+
+        bool _alarmLowSoC = false;
+        bool _alarmLowVoltage = false;
+        bool _alarmHightVoltage = false;
+        bool _alarmLowTemperature = false;
+        bool _alarmHighTemperature = false;
+
+};

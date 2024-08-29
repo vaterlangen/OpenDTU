@@ -43,6 +43,8 @@
 #define POWERMETER_HTTP_JSON_MAX_PATH_STRLEN 256
 #define BATTERY_JSON_MAX_PATH_STRLEN 128
 
+#define ZENDURE_MAX_SERIAL_STRLEN 8
+
 struct CHANNEL_CONFIG_T {
     uint16_t MaxChannelPower;
     char Name[CHAN_MAX_NAME_STRLEN];
@@ -288,6 +290,12 @@ struct CONFIG_T {
         char MqttVoltageTopic[MQTT_MAX_TOPIC_STRLEN + 1];
         char MqttVoltageJsonPath[BATTERY_JSON_MAX_PATH_STRLEN + 1];
         BatteryVoltageUnit MqttVoltageUnit;
+        uint8_t ZendureDeviceType;
+        char ZendureDeviceSerial[ZENDURE_MAX_SERIAL_STRLEN + 1];
+        uint8_t ZendureMinSoC;
+        uint8_t ZendureMaxSoC;
+        uint8_t ZendureBypassMode;
+        uint16_t ZendureMaxOutput;
     } Battery;
 
     struct {

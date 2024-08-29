@@ -6,6 +6,7 @@
 #include "MqttSettings.h"
 #include "JkBmsDataPoints.h"
 #include "MqttSettings.h"
+#include "Utils.h"
 
 template<typename T>
 static void addLiveViewInSection(JsonVariant& root,
@@ -610,4 +611,404 @@ void VictronSmartShuntStats::mqttPublish() const {
     MqttSettings.publish("battery/lastFullCharge", String(_lastFullCharge));
     MqttSettings.publish("battery/midpointVoltage", String(_midpointVoltage));
     MqttSettings.publish("battery/midpointDeviation", String(_midpointDeviation));
+}
+
+void ZendureBatteryStats::update(JsonObjectConst props, unsigned int ms){
+    auto soc = Utils::getJsonElement<float>(props, "electricLevel");
+    if (soc.has_value() && (*soc >= 0 && *soc <= 100)){
+        setSoC(*soc, 0/*precision*/, ms);
+    }
+
+    auto soc_max = Utils::getJsonElement<float>(props, "socSet");
+    if (soc_max.has_value()){
+        *soc_max /= 10;
+        if (*soc_max >= 40 && *soc_max <= 100){
+            _soc_max = *soc_max;
+        }
+    }
+
+    auto soc_min = Utils::getJsonElement<float>(props, "minSoc");
+    if (soc_min.has_value()){
+        *soc_min /= 10;
+        if (*soc_min >= 0 && *soc_min <= 60){
+            _soc_min = *soc_min;
+        }
+    }
+
+    auto input_limit = Utils::getJsonElement<uint16_t>(props, "inputLimit");
+    if (input_limit.has_value()){
+        _input_limit = *input_limit;
+    }
+
+    auto output_limit = Utils::getJsonElement<uint16_t>(props, "outputLimit");
+    if (output_limit.has_value()){
+        _output_limit = *output_limit;
+    }
+
+    auto inverse_max = Utils::getJsonElement<uint16_t>(props, "inverseMaxPower");
+    if (inverse_max.has_value()){
+        _inverse_max = *inverse_max;
+    }
+
+    auto pass_mode = Utils::getJsonElement<uint8_t>(props, "passMode");
+    if (pass_mode.has_value()){
+        _bypass_mode = *pass_mode;
+    }
+
+    auto pass_state = Utils::getJsonElement<uint8_t>(props, "pass");
+    if (pass_state.has_value()){
+        _bypass_state = static_cast<bool>(*pass_state);
+    }
+
+    auto batteries = Utils::getJsonElement<uint8_t>(props, "packNum");
+    if (batteries.has_value() && batteries <= 4){
+        _num_batteries = *batteries;
+    }
+
+    auto state = Utils::getJsonElement<uint8_t>(props, "packState");
+    if (state.has_value()){
+        _state = *state;
+    }
+
+    auto heat_state = Utils::getJsonElement<uint8_t>(props, "heatState");
+    if (heat_state.has_value()){
+        _heat_state = *heat_state;
+    }
+
+    auto auto_shutdown = Utils::getJsonElement<uint8_t>(props, "hubState");
+    if (auto_shutdown.has_value()){
+        _auto_shutdown = *auto_shutdown;
+    }
+
+    auto buzzer = Utils::getJsonElement<uint8_t>(props, "buzzerSwitch");
+    if (buzzer.has_value()){
+        _buzzer = *buzzer;
+    }
+
+    auto auto_recover = Utils::getJsonElement<uint8_t>(props, "autoRecover");
+    if (auto_recover.has_value()){
+        _auto_recover = static_cast<bool>(*auto_recover);
+    }
+
+    auto charge_power = Utils::getJsonElement<uint16_t>(props, "outputPackPower");
+    if (charge_power.has_value()){
+        _charge_power = *charge_power;
+    }
+
+    auto discharge_power = Utils::getJsonElement<uint16_t>(props, "packInputPower");
+    if (discharge_power.has_value()){
+        _discharge_power = *discharge_power;
+    }
+
+    auto output_power = Utils::getJsonElement<uint16_t>(props, "outputHomePower");
+    if (output_power.has_value()){
+        _output_power = *output_power;
+    }
+
+    auto input_power = Utils::getJsonElement<uint16_t>(props, "solarInputPower");
+    if (input_power.has_value()){
+        _input_power = *input_power;
+    }
+
+    auto solar_power_1 = Utils::getJsonElement<uint16_t>(props, "solarPower1");
+    if (solar_power_1.has_value()){
+        _solar_power_1 = *solar_power_1;
+    }
+
+    auto solar_power_2 = Utils::getJsonElement<uint16_t>(props, "solarPower2");
+    if (solar_power_2.has_value()){
+        _solar_power_2 = *solar_power_2;
+    }
+
+    float voltage = getVoltage();
+    if (charge_power.has_value() && discharge_power.has_value() && voltage){
+        setCurrent((*charge_power - *discharge_power) / voltage, 2, ms);
+    }
+
+    calculateEfficiency();
+}
+
+std::optional<ZendureBatteryStats::ZendurePackStats*> ZendureBatteryStats::getPackData(String serial) const {
+    try
+    {
+        return _packData.at(serial);
+    }
+    catch(const std::out_of_range& ex)
+    {
+        return std::nullopt;
+    }
+}
+
+void ZendureBatteryStats::updatePackData(String serial, JsonObjectConst packData, unsigned int ms){
+    try
+    {
+        _packData.at(serial);
+    }
+    catch(const std::out_of_range& ex)
+    {
+        _packData[serial] = new ZendurePackStats(serial);
+    }
+
+    _packData[serial]->update(packData, ms);
+
+
+    calculateAggregatedPackData();
+}
+
+void ZendureBatteryStats::ZendurePackStats::update(JsonObjectConst packData, unsigned int ms){
+    _lastUpdateTimestamp = ms;
+
+    auto power = Utils::getJsonElement<int16_t>(packData, "power");
+    if (power.has_value()){
+        _power = *power;
+    }
+
+    auto soc_level = Utils::getJsonElement<uint8_t>(packData, "socLevel");
+    if (power.has_value()){
+        _soc_level = *soc_level;
+    }
+
+    auto state = Utils::getJsonElement<uint8_t>(packData, "state");
+    if (state.has_value()){
+        _state = *state;
+    }
+
+    auto cell_temp_max = Utils::getJsonElement<float>(packData, "maxTemp");
+    if (state.has_value()){
+        *cell_temp_max -= 2731;
+        *cell_temp_max /= 10;
+
+        if (*cell_temp_max > -100 && *cell_temp_max < 100) {
+            _cell_temperature_max = *cell_temp_max;
+        }
+    }
+
+    auto total_voltage = Utils::getJsonElement<float>(packData, "totalVol");
+    if (total_voltage.has_value()){
+        *total_voltage /= 100;
+        if (*total_voltage > 0 && *total_voltage < 65){
+            _voltage_total = *total_voltage;
+            _totalVoltageTimestamp = _lastUpdateTimestamp;
+        }
+    }
+
+    auto cell_voltage_max = Utils::getJsonElement<uint16_t>(packData, "maxVol");
+    if (cell_voltage_max.has_value()){
+        *cell_voltage_max *= 10;
+        if (*cell_voltage_max > 2000 && *cell_voltage_max < 4000){
+            _cell_voltage_max = *cell_voltage_max;
+        }
+    }
+
+    auto cell_voltage_min = Utils::getJsonElement<uint16_t>(packData, "minVol");
+    if (cell_voltage_min.has_value()){
+        *cell_voltage_min *= 10;
+        if (*cell_voltage_min > 2000 && *cell_voltage_min < 4000){
+            _cell_voltage_min = *cell_voltage_min;
+        }
+    }
+
+    auto version = Utils::getJsonElement<uint32_t>(packData, "softVersion");
+    if (version.has_value()){
+        _version = *version;
+    }
+
+    _cell_voltage_spread = _cell_voltage_max - _cell_voltage_min;
+}
+
+void ZendureBatteryStats::getLiveViewData(JsonVariant& root) const {
+    BatteryStats::getLiveViewData(root);
+
+    // values go into the "Status" card of the web application
+    addLiveViewValue(root, "solarInputPower1", _solar_power_1, "W", 0);
+    addLiveViewValue(root, "solarInputPower2", _solar_power_2, "W", 0);
+    addLiveViewValue(root, "totalInputPower", _input_power, "W", 0);
+    addLiveViewValue(root, "chargePower", _charge_power, "W", 0);
+    addLiveViewValue(root, "dischargePower", _discharge_power, "W", 0);
+    addLiveViewValue(root, "totalOutputPower", _output_power, "W", 0);
+    addLiveViewValue(root, "efficiency", _efficiency, "%", 3);
+
+    addLiveViewValue(root, "capacity", _capacity, "Wh", 0);
+    addLiveViewValue(root, "availableCapacity", getAvailableCapacity(), "Wh", 0);
+    addLiveViewValue(root, "cellMaxTemperature", _cellTemperature, "°C", 1);
+    addLiveViewValue(root, "cellMinVoltage", _cellMinMilliVolt, "mV", 0);
+    addLiveViewValue(root, "cellMaxVoltage", _cellMaxMilliVolt, "mV", 0);
+    addLiveViewValue(root, "cellDiffVoltage", _cellDeltaMilliVolt, "mV", 0);
+
+    addLiveViewValue(root, "maxInversePower", _inverse_max, "W", 0);
+    addLiveViewValue(root, "outputLimit", _output_limit, "W", 0);
+    addLiveViewValue(root, "inputLimit", _output_limit, "W", 0);
+    addLiveViewValue(root, "minSoC", _soc_min, "%", 1);
+    addLiveViewValue(root, "maxSoC", _soc_max, "%", 1);
+
+    addLiveViewTextValue(root, "state", getStateString());
+    addLiveViewTextValue(root, "bypassMode", getBypassModeString());
+    addLiveViewTextValue(root, "bypassState", _bypass_state ? "activated" : "deactivated");
+    addLiveViewTextValue(root, "heatState", _heat_state ? "activated" : "deactivated");
+    addLiveViewTextValue(root, "autoRecover", _auto_recover ? "enabled" : "disabled");
+    addLiveViewTextValue(root, "autoShutdown", _auto_shutdown ? "enabled" : "disabled");
+    addLiveViewTextValue(root, "buzzer", _buzzer ? "enabled" : "disabled");
+
+    addLiveViewValue(root, "batteries", _num_batteries, "", 0);
+
+    addLiveViewAlarm(root, "lowSOC", _alarmLowSoC);
+    addLiveViewAlarm(root, "lowVoltage", _alarmLowVoltage);
+    addLiveViewAlarm(root, "highVoltage", _alarmHightVoltage);
+    addLiveViewAlarm(root, "underTemperatureCharge", _alarmLowTemperature);
+    addLiveViewAlarm(root, "overTemperatureCharge", _alarmHighTemperature);
+}
+
+void ZendureBatteryStats::mqttPublish() const {
+    BatteryStats::mqttPublish();
+
+    MqttSettings.publish("battery/cellMinMilliVolt", String(_cellMinMilliVolt));
+    MqttSettings.publish("battery/cellMaxMilliVolt", String(_cellMaxMilliVolt));
+    MqttSettings.publish("battery/cellDiffMilliVolt", String(_cellDeltaMilliVolt));
+    MqttSettings.publish("battery/cellMaxTemperature", String(_cellTemperature));
+    MqttSettings.publish("battery/chargePower", String(_charge_power));
+    MqttSettings.publish("battery/dischargePower", String(_discharge_power));
+    MqttSettings.publish("battery/heating", String(static_cast<uint8_t>(_heat_state)));
+    MqttSettings.publish("battery/state", String(_state));
+    MqttSettings.publish("battery/numPacks", String(_num_batteries));
+
+    for (const auto& [sn, value] : _packData){
+        MqttSettings.publish("battery/" + sn + "/cellMinMilliVolt", String(value->_cell_voltage_min));
+        MqttSettings.publish("battery/" + sn + "/cellMaxMilliVolt", String(value->_cell_voltage_max));
+        MqttSettings.publish("battery/" + sn + "/cellDiffMilliVolt", String(value->_cell_voltage_spread));
+        MqttSettings.publish("battery/" + sn + "/cellMaxTemperature", String(value->_cell_temperature_max));
+        MqttSettings.publish("battery/" + sn + "/voltage", String(value->_voltage_total));
+        MqttSettings.publish("battery/" + sn + "/power", String(value->_power));
+        MqttSettings.publish("battery/" + sn + "/current", String(value->_current));
+        MqttSettings.publish("battery/" + sn + "/stateOfCharge", String(value->_soc_level));
+        MqttSettings.publish("battery/" + sn + "/state", String(value->_state));
+    }
+
+    MqttSettings.publish("battery/solarPowerMppt1", String(_solar_power_1));
+    MqttSettings.publish("battery/solarPowerMppt2", String(_solar_power_2));
+    MqttSettings.publish("battery/outputPower", String(_output_power));
+    MqttSettings.publish("battery/inputPower", String(_input_power));
+    MqttSettings.publish("battery/outputLimitPower", String(_output_limit));
+   // MqttSettings.publish("battery/inputLimitPower", String(_output_limit));
+    MqttSettings.publish("battery/bypass", String(static_cast<uint8_t>(_bypass_state)));
+}
+
+std::string ZendureBatteryStats::getBypassModeString() const {
+    switch (_bypass_mode) {
+        case 0:
+            return "auto";
+        case 1:
+            return "alwaysoff";
+        case 2:
+            return "alwayson";
+        default:
+            return "invalid";
+    }
+}
+
+std::string ZendureBatteryStats::getStateString() const {
+    switch (_state) {
+        case 0:
+            return "idle";
+        case 1:
+            return "charging";
+        case 2:
+            return "discharging";
+        default:
+            return "invalid";
+    }
+}
+
+void ZendureBatteryStats::calculateAggregatedPackData() {
+    // calcualte average voltage over all battery packs
+    float voltage = 0.0;
+    float temp = 0.0;
+    uint32_t cellMin = UINT32_MAX;
+    uint32_t cellMax = 0;
+    float current = 0.0;
+    uint16_t capacity = 0;
+
+    uint32_t timestampVoltage = 0;
+    uint32_t timestampCurrent = 0;
+
+    size_t countVoltage = 0;
+    size_t countValid = 0;
+
+
+    bool alarmLowSoC = false;
+    bool alarmTempLow = false;
+    bool alarmTempHigh = false;
+    bool alarmLowVoltage = false;
+    bool alarmHighVoltage = false;
+
+    for (const auto& [sn, value] : _packData){
+        capacity += value->getCapacity();
+
+        // sum all pack voltages
+        if (value->_totalVoltageTimestamp){
+            voltage += value->_voltage_total;
+            timestampVoltage = max(timestampVoltage, value->_totalVoltageTimestamp);
+
+            alarmLowVoltage |= value->hasAlarmLowVoltage();
+            alarmHighVoltage |= value->hasAlarmHighVoltage();
+
+            countVoltage++;
+        }
+
+        // sum all pack currents
+        if (value->_totalCurrentTimestamp){
+            current += value->_current;
+            timestampCurrent = max(value->_totalCurrentTimestamp, timestampCurrent);
+        }
+
+        // aggregate remaining values
+        if (value->_lastUpdateTimestamp){
+            temp = max(temp, value->_cell_temperature_max);
+
+            cellMax = max(cellMax, static_cast<uint32_t>(value->_cell_voltage_max));
+            if (value->_cell_voltage_min){
+                cellMin = min(cellMin, static_cast<uint32_t>(value->_cell_voltage_min));
+            }
+
+            alarmLowSoC |= value->hasAlarmLowSoC();
+            alarmTempLow |= value->hasAlarmMinTemp();
+            alarmTempHigh |= value->hasAlarmMaxTemp();
+
+            countValid++;
+        }
+    }
+
+    if (countVoltage){
+        setVoltage(voltage / countVoltage, timestampVoltage);
+        setCurrent(current, 2, timestampCurrent);
+
+        _alarmLowVoltage = alarmLowVoltage;
+        _alarmHightVoltage = alarmHighVoltage;
+    }
+
+    if(countValid){
+        _cellMaxMilliVolt = static_cast<uint16_t>(cellMax);
+        _cellMinMilliVolt = static_cast<uint16_t>(cellMin);
+        _cellDeltaMilliVolt = _cellMaxMilliVolt - _cellMinMilliVolt;
+
+        _cellTemperature = temp;
+        _alarmHighTemperature = alarmTempHigh;
+        _alarmLowTemperature = alarmTempLow;
+        _alarmLowSoC = alarmLowSoC;
+    }
+
+    _capacity = capacity;
+}
+
+void ZendureBatteryStats::calculateEfficiency() {
+    float in = _input_power;
+    float out = _output_power;
+    if (isCharging()){
+        out += _charge_power;
+    }
+    if (isDischarging()){
+        in += _discharge_power;
+    }
+
+    _efficiency = in ? out / in : 0.0;
+    _efficiency *= 100;
 }
