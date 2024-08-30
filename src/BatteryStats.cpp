@@ -814,6 +814,10 @@ void ZendureBatteryStats::ZendurePackStats::update(JsonObjectConst packData, uns
     }
 
     _cell_voltage_spread = _cell_voltage_max - _cell_voltage_min;
+
+    if (_voltage_total){
+        _current = static_cast<float>(_power) / _voltage_total;
+    }
 }
 
 void ZendureBatteryStats::getLiveViewData(JsonVariant& root) const {
@@ -864,7 +868,7 @@ void ZendureBatteryStats::getLiveViewData(JsonVariant& root) const {
         addLiveViewInSection(root, section, "cellMinVoltage", value->_cell_voltage_min, "mV", 0);
         addLiveViewInSection(root, section, "cellMaxVoltage", value->_cell_voltage_max, "mV", 0);
         addLiveViewInSection(root, section, "cellDiffVoltage", value->_cell_voltage_spread, "mV", 0);
-        addLiveViewInSection(root, section, "voltage", value->_voltage_total, "V", 0);
+        addLiveViewInSection(root, section, "voltage", value->_voltage_total, "V", 2);
         addLiveViewInSection(root, section, "power", value->_power, "W", 0);
         addLiveViewInSection(root, section, "current", value->_current, "A", 2);
         addLiveViewInSection(root, section, "SoC", value->_soc_level, "%", 1);
