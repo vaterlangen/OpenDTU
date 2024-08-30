@@ -950,11 +950,9 @@ void ZendureBatteryStats::calculateAggregatedPackData() {
     float temp = 0.0;
     uint32_t cellMin = UINT32_MAX;
     uint32_t cellMax = 0;
-    float current = 0.0;
     uint16_t capacity = 0;
 
     uint32_t timestampVoltage = 0;
-    uint32_t timestampCurrent = 0;
 
     size_t countVoltage = 0;
     size_t countValid = 0;
@@ -980,12 +978,6 @@ void ZendureBatteryStats::calculateAggregatedPackData() {
             countVoltage++;
         }
 
-        // sum all pack currents
-        if (value->_totalCurrentTimestamp){
-            current += value->_current;
-            timestampCurrent = max(value->_totalCurrentTimestamp, timestampCurrent);
-        }
-
         // aggregate remaining values
         if (value->_lastUpdateTimestamp){
             temp = max(temp, value->_cell_temperature_max);
@@ -1005,7 +997,6 @@ void ZendureBatteryStats::calculateAggregatedPackData() {
 
     if (countVoltage){
         setVoltage(voltage / countVoltage, timestampVoltage);
-        setCurrent(current, 2, timestampCurrent);
 
         _alarmLowVoltage = alarmLowVoltage;
         _alarmHightVoltage = alarmHighVoltage;
