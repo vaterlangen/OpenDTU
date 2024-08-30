@@ -278,11 +278,12 @@ class ZendureBatteryStats : public BatteryStats {
         friend class ZendureBatteryStats;
 
         public:
-            explicit ZendurePackStats(String serial){ _serial = serial; }
+            explicit ZendurePackStats(String serial){ setSerial(serial); }
             void update(JsonObjectConst packData, unsigned int ms);
             bool isCharging() const { return  _state == 2; };
             bool isDischarging() const { return  _state == 1; };
             uint16_t getCapacity() const { return 1920; }
+            std::string getStateString() const { return ZendureBatteryStats::getStateString(_state); };
 
         protected:
             bool hasAlarmMaxTemp() const { return _cell_temperature_max >= 45; };
@@ -290,8 +291,11 @@ class ZendureBatteryStats : public BatteryStats {
             bool hasAlarmLowSoC() const { return _soc_level < 5; }
             bool hasAlarmLowVoltage() const { return _voltage_total <= 40.0; }
             bool hasAlarmHighVoltage() const { return _voltage_total >= 58.4; }
+            void setSerial(String serial);
 
             String _serial;
+            String _name = "unknown";
+            uint16_t _capacity = 0;
             uint32_t _version;
             uint16_t _cell_voltage_min;
             uint16_t _cell_voltage_max;
@@ -323,6 +327,8 @@ class ZendureBatteryStats : public BatteryStats {
         bool isCharging() const { return  _state == 1; };
         bool isDischarging() const { return  _state == 2; };
 
+        static std::string getStateString(uint8_t state);
+
     protected:
         std::optional<ZendureBatteryStats::ZendurePackStats*> getPackData(String serial) const;
         void updatePackData(String serial, JsonObjectConst packData, unsigned int ms);
@@ -332,7 +338,7 @@ class ZendureBatteryStats : public BatteryStats {
 
     private:
         std::string getBypassModeString() const;
-        std::string getStateString() const;
+        std::string getStateString() const { return ZendureBatteryStats::getStateString(_state); };
         void calculateEfficiency();
         void calculateAggregatedPackData();
 

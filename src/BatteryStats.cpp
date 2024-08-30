@@ -819,38 +819,60 @@ void ZendureBatteryStats::ZendurePackStats::update(JsonObjectConst packData, uns
 void ZendureBatteryStats::getLiveViewData(JsonVariant& root) const {
     BatteryStats::getLiveViewData(root);
 
+
+    auto bool2str = [](bool value) -> std::string {
+        return value ? "enabled" : "disabled";
+    };
+
     // values go into the "Status" card of the web application
-    addLiveViewValue(root, "solarInputPower1", _solar_power_1, "W", 0);
-    addLiveViewValue(root, "solarInputPower2", _solar_power_2, "W", 0);
-    addLiveViewValue(root, "totalInputPower", _input_power, "W", 0);
-    addLiveViewValue(root, "chargePower", _charge_power, "W", 0);
-    addLiveViewValue(root, "dischargePower", _discharge_power, "W", 0);
-    addLiveViewValue(root, "totalOutputPower", _output_power, "W", 0);
-    addLiveViewValue(root, "efficiency", _efficiency, "%", 3);
+    std::string section("status");
+    addLiveViewInSection(root, section, "totalInputPower", _input_power, "W", 0);
+    addLiveViewInSection(root, section, "chargePower", _charge_power, "W", 0);
+    addLiveViewInSection(root, section, "dischargePower", _discharge_power, "W", 0);
+    addLiveViewInSection(root, section, "totalOutputPower", _output_power, "W", 0);
+    addLiveViewInSection(root, section, "efficiency", _efficiency, "%", 3);
+    addLiveViewInSection(root, section, "capacity", _capacity, "Wh", 0);
+    addLiveViewInSection(root, section, "availableCapacity", getAvailableCapacity(), "Wh", 0);
+    addLiveViewTextInSection(root, section, "state", getStateString());
+    addLiveViewTextInSection(root, section, "heatState", bool2str(_heat_state));
 
-    addLiveViewValue(root, "capacity", _capacity, "Wh", 0);
-    addLiveViewValue(root, "availableCapacity", getAvailableCapacity(), "Wh", 0);
-    addLiveViewValue(root, "cellMaxTemperature", _cellTemperature, "°C", 1);
-    addLiveViewValue(root, "cellMinVoltage", _cellMinMilliVolt, "mV", 0);
-    addLiveViewValue(root, "cellMaxVoltage", _cellMaxMilliVolt, "mV", 0);
-    addLiveViewValue(root, "cellDiffVoltage", _cellDeltaMilliVolt, "mV", 0);
+    // values go into the "Settings" card of the web application
+    section = "settings";
+    addLiveViewInSection(root, section, "maxInversePower", _inverse_max, "W", 0);
+    addLiveViewInSection(root, section, "outputLimit", _output_limit, "W", 0);
+    addLiveViewInSection(root, section, "inputLimit", _output_limit, "W", 0);
+    addLiveViewInSection(root, section, "minSoC", _soc_min, "%", 1);
+    addLiveViewInSection(root, section, "maxSoC", _soc_max, "%", 1);
+    addLiveViewTextInSection(root, section, "autoRecover", bool2str(_auto_recover));
+    addLiveViewTextInSection(root, section, "autoShutdown", bool2str(_auto_shutdown));
+    addLiveViewTextInSection(root, section, "bypassMode", getBypassModeString());
+    addLiveViewTextInSection(root, section, "bypassState", bool2str(_bypass_state));
+    addLiveViewTextInSection(root, section, "buzzer", bool2str(_buzzer));
 
-    addLiveViewValue(root, "maxInversePower", _inverse_max, "W", 0);
-    addLiveViewValue(root, "outputLimit", _output_limit, "W", 0);
-    addLiveViewValue(root, "inputLimit", _output_limit, "W", 0);
-    addLiveViewValue(root, "minSoC", _soc_min, "%", 1);
-    addLiveViewValue(root, "maxSoC", _soc_max, "%", 1);
+    // values go into the "Solar Panels" card of the web application
+    section = "panels";
+    addLiveViewInSection(root, section, "solarInputPower1", _solar_power_1, "W", 0);
+    addLiveViewInSection(root, section, "solarInputPower2", _solar_power_2, "W", 0);
 
-    addLiveViewTextValue(root, "state", getStateString());
-    addLiveViewTextValue(root, "bypassMode", getBypassModeString());
-    addLiveViewTextValue(root, "bypassState", _bypass_state ? "enabled" : "disabled");
-    addLiveViewTextValue(root, "heatState", _heat_state ? "enabled" : "disabled");
-    addLiveViewTextValue(root, "autoRecover", _auto_recover ? "enabled" : "disabled");
-    addLiveViewTextValue(root, "autoShutdown", _auto_shutdown ? "enabled" : "disabled");
-    addLiveViewTextValue(root, "buzzer", _buzzer ? "enabled" : "disabled");
+    // pack data goes to dedicated cards of the web application
+    char buff[50];
+    for (const auto& [sn, value] : _packData){
+        snprintf(buff, sizeof(buff), "__notranslate__%s [%s]", value->_name.c_str(), sn.c_str());
+        section = std::string(buff);
+        addLiveViewTextInSection(root, section, "state", value->getStateString());
+        addLiveViewInSection(root, section, "cellMaxTemperature", value->_cell_temperature_max, "°C", 1);
+        addLiveViewInSection(root, section, "cellMinVoltage", value->_cell_voltage_min, "mV", 0);
+        addLiveViewInSection(root, section, "cellMaxVoltage", value->_cell_voltage_max, "mV", 0);
+        addLiveViewInSection(root, section, "cellDiffVoltage", value->_cell_voltage_spread, "mV", 0);
+        addLiveViewInSection(root, section, "voltage", value->_voltage_total, "V", 0);
+        addLiveViewInSection(root, section, "power", value->_power, "W", 0);
+        addLiveViewInSection(root, section, "current", value->_current, "A", 2);
+        addLiveViewInSection(root, section, "SoC", value->_soc_level, "%", 1);
+        addLiveViewInSection(root, section, "capacity", value->_capacity, "Wh", 0);
+        addLiveViewInSection(root, section, "FwVersion", value->_version, "", 0);
+    }
 
-    addLiveViewValue(root, "batteries", _num_batteries, "", 0);
-
+    // values go into the alarms card of the web application
     addLiveViewAlarm(root, "lowSOC", _alarmLowSoC);
     addLiveViewAlarm(root, "lowVoltage", _alarmLowVoltage);
     addLiveViewAlarm(root, "highVoltage", _alarmHightVoltage);
@@ -905,8 +927,8 @@ std::string ZendureBatteryStats::getBypassModeString() const {
     }
 }
 
-std::string ZendureBatteryStats::getStateString() const {
-    switch (_state) {
+std::string ZendureBatteryStats::getStateString(uint8_t state) {
+    switch (state) {
         case 0:
             return "idle";
         case 1:
@@ -1011,4 +1033,13 @@ void ZendureBatteryStats::calculateEfficiency() {
 
     _efficiency = in ? out / in : 0.0;
     _efficiency *= 100;
+}
+
+
+void ZendureBatteryStats::ZendurePackStats::setSerial(String serial){
+    if (serial.startsWith("CO4H")){
+        _capacity = 1920;
+        _name = "AB2000";
+    }
+    _serial = serial;
 }
