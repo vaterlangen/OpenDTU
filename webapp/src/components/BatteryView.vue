@@ -47,7 +47,14 @@
                                 class="col order-0"
                             >
                                 <div class="card" :class="{ 'border-info': true }">
-                                    <div class="card-header text-bg-info">{{ $t('battery.' + section) }}</div>
+                                    <div class="card-header text-bg-info">
+                                        <template v-if="section.toString().includes('__notranslate__')">
+                                            {{ section.toString().replace('__notranslate__','') }}
+                                        </template>
+                                        <template v-else>
+                                            {{ $t('battery.' + section) }}
+                                        </template>
+                                    </div>
                                     <div class="card-body">
                                         <table class="table table-striped table-hover">
                                             <thead>
