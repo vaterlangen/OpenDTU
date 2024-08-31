@@ -839,6 +839,8 @@ void ZendureBatteryStats::getLiveViewData(JsonVariant& root) const {
     addLiveViewInSection(root, section, "availableCapacity", getAvailableCapacity(), "Wh", 0);
     addLiveViewTextInSection(root, section, "state", getStateString());
     addLiveViewTextInSection(root, section, "heatState", bool2str(_heat_state));
+    addLiveViewTextInSection(root, section, "bypassState", bool2str(_bypass_state));
+    addLiveViewInSection(root, section, "batteries", _num_batteries, "", 0);
 
     // values go into the "Settings" card of the web application
     section = "settings";
@@ -850,7 +852,6 @@ void ZendureBatteryStats::getLiveViewData(JsonVariant& root) const {
     addLiveViewTextInSection(root, section, "autoRecover", bool2str(_auto_recover));
     addLiveViewTextInSection(root, section, "autoShutdown", bool2str(_auto_shutdown));
     addLiveViewTextInSection(root, section, "bypassMode", getBypassModeString());
-    addLiveViewTextInSection(root, section, "bypassState", bool2str(_bypass_state));
     addLiveViewTextInSection(root, section, "buzzer", bool2str(_buzzer));
 
     // values go into the "Solar Panels" card of the web application
@@ -859,9 +860,9 @@ void ZendureBatteryStats::getLiveViewData(JsonVariant& root) const {
     addLiveViewInSection(root, section, "solarInputPower2", _solar_power_2, "W", 0);
 
     // pack data goes to dedicated cards of the web application
-    char buff[50];
+    char buff[30];
     for (const auto& [sn, value] : _packData){
-        snprintf(buff, sizeof(buff), "__notranslate__%s [%s]", value->_name.c_str(), sn.c_str());
+        snprintf(buff, sizeof(buff), "_%s [%s]", value->_name.c_str(), sn.c_str());
         section = std::string(buff);
         addLiveViewTextInSection(root, section, "state", value->getStateString());
         addLiveViewInSection(root, section, "cellMaxTemperature", value->_cell_temperature_max, "°C", 1);
