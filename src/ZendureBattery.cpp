@@ -12,22 +12,28 @@ bool ZendureBattery::init(bool verboseLogging)
 
     auto const& config = Configuration.get();
     String deviceType;
+    String deviceName;
 
     switch (config.Battery.ZendureDeviceType){
         case 0:
             deviceType = ZENDURE_HUB1200;
+            deviceName = String("HUB 1200");
             break;
         case 1:
             deviceType = ZENDURE_HUB2000;
+            deviceName = String("HUB 2000");
             break;
         case 2:
             deviceType = ZENDURE_AIO2400;
+            deviceName = String("AIO 2400");
             break;
         case 3:
             deviceType = ZENDURE_ACE1500;
+            deviceName = String("Ace 1500");
             break;
         case 4:
             deviceType = ZENDURE_HYPER2000;
+            deviceName = String("Hyper 2000");
             break;
         default:
             MessageOutput.printf("ZendureBattery: Invalid device type!");
@@ -60,7 +66,9 @@ bool ZendureBattery::init(bool verboseLogging)
     _nextUpdate = 0;
     _nextTimesync = 0;
 
-    _stats->setManuafacture("Zendure");
+    _stats->setSerial(_deviceId);
+    _stats->setDevice(deviceName);
+    _stats->setManufacture("Zendure");
 
     JsonDocument root;
     JsonVariant prop = root["properties"].to<JsonObject>();

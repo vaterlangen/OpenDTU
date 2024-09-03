@@ -725,6 +725,31 @@ void ZendureBatteryStats::update(JsonObjectConst props, unsigned int ms){
         setCurrent((*charge_power - *discharge_power) / voltage, 2, ms);
     }
 
+    auto sw_version = Utils::getJsonElement<uint32_t>(props, "masterSoftVersion");
+    if (sw_version.has_value()){
+        _fwversion = String(*sw_version);
+    }
+
+    auto hw_version = Utils::getJsonElement<uint32_t>(props, "masterhaerVersion");
+    if (hw_version.has_value()){
+        _hwversion = String(*hw_version);
+    } else {
+        hw_version = Utils::getJsonElement<uint32_t>(props, "masterHaerVersion");
+        if (hw_version.has_value()){
+            _hwversion = String(*hw_version);
+        }
+    }
+
+    auto outtime = Utils::getJsonElement<uint16_t>(props, "remainOutTime");
+    if (outtime.has_value()){
+        _remain_out_time = *outtime;
+    }
+
+    auto intime = Utils::getJsonElement<uint16_t>(props, "remainInputTime");
+    if (intime.has_value()){
+        _remain_in_time = *intime;
+    }
+
     calculateEfficiency();
 }
 
@@ -828,6 +853,14 @@ void ZendureBatteryStats::getLiveViewData(JsonVariant& root) const {
         return value ? "enabled" : "disabled";
     };
 
+    auto addRemainingTime = [](auto root, auto section, const char* name, uint16_t value) {
+        if (value >= 59940){
+            addLiveViewTextInSection(root, section, name, "unavail");
+        }else{
+            addLiveViewInSection(root, section, name, value, "min", 0);
+        }
+    };
+
     // values go into the "Status" card of the web application
     std::string section("status");
     addLiveViewInSection(root, section, "totalInputPower", _input_power, "W", 0);
@@ -841,6 +874,8 @@ void ZendureBatteryStats::getLiveViewData(JsonVariant& root) const {
     addLiveViewTextInSection(root, section, "heatState", bool2str(_heat_state));
     addLiveViewTextInSection(root, section, "bypassState", bool2str(_bypass_state));
     addLiveViewInSection(root, section, "batteries", _num_batteries, "", 0);
+    addRemainingTime(root, section, "remainOutTime", _remain_out_time);
+    addRemainingTime(root, section, "remainInTime", _remain_in_time);
 
     // values go into the "Settings" card of the web application
     section = "settings";

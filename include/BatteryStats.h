@@ -342,9 +342,28 @@ class ZendureBatteryStats : public BatteryStats {
         void calculateEfficiency();
         void calculateAggregatedPackData();
 
-        void setManuafacture(const char* manufacture) {
+        void setManufacture(const char* manufacture) {
             _manufacturer = String(manufacture);
+            if (_device){
+                _manufacturer += " " + _device;
+            }
         }
+
+        void setSerial(const char* serial) {
+            _serial = String(serial);
+        }
+        void setSerial(String serial) {
+            _serial = serial;
+        }
+
+        void setDevice(const char* device) {
+            _device = String(device);
+        }
+        void setDevice(String device) {
+            _device = device;
+        }
+
+        String _device;
 
         std::map<String, ZendurePackStats*> _packData = std::map<String, ZendurePackStats*>();
 
@@ -371,6 +390,9 @@ class ZendureBatteryStats : public BatteryStats {
 
         uint16_t _remain_out_time;
         uint16_t _remain_in_time;
+
+        uint32_t _swVersion;
+        uint32_t _hwVersion;
 
         uint8_t _state;
         uint8_t _num_batteries;
