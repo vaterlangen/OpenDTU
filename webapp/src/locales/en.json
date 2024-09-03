@@ -1037,6 +1037,9 @@
         "alwayson": "Always On",
         "efficiency": "Efficiency",
         "panels": "Solar input",
-        "settings": "Settings"
+        "settings": "Settings",
+        "remainOutTime": "Remaining discharge time",
+        "remainInTime": "Remaining charge time",
+        "unavail": "N/A"
     }
 }

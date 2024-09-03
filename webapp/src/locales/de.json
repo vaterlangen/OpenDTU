@@ -1032,6 +1032,9 @@
         "alwayson": "Dauerhaft Eingeschaltet",
         "efficiency": "Wirkungsgrad",
         "panels": "Solar Eingänge",
-        "settings": "Einstellungen"
+        "settings": "Einstellungen",
+        "remainOutTime": "Verbleibende Entladezeit",
+        "remainInTime": "Verbleibende Ladezeit",
+        "unavail": "N/A"
     }
 }
