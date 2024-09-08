@@ -181,6 +181,37 @@ void MqttHandleBatteryHassClass::loop()
             publishBinarySensor("Warning BMS internal", "mdi:alert-outline", "warning/bmsInternal", "1", "0");
             publishBinarySensor("Warning Cell Imbalance", "mdi:alert-outline", "warning/cellImbalance", "1", "0");
             break;
+        case 5: // Solarflow
+            publishSensor("Voltage", "mdi:battery-charging", "voltage", "voltage", "measurement", "V");
+            publishSensor("Current", "mdi:current-dc", "current", "current", "measurement", "A");
+
+            publishSensor("Cell Min Voltage", NULL, "CellMinMilliVolt", "voltage", "measurement", "mV");
+            publishSensor("Cell Average Voltage", NULL, "CellAvgMilliVolt", "voltage", "measurement", "mV");
+            publishSensor("Cell Max Voltage", NULL, "CellMaxMilliVolt", "voltage", "measurement", "mV");
+            publishSensor("Cell Voltage Diff", "mdi:battery-alert", "CellDiffMilliVolt", "voltage", "measurement", "mV");
+            publishSensor("Cell Max Temperature", NULL, "CellMaxTemperature", "temperature", "measurement", "°C");
+            publishSensor("Charge Power", "mdi:battery-charging", "chargePower", "power", "measurement", "W");
+            publishSensor("Discharge Power", "mdi:battery-discharging", "dischargePower", "power", "measurement", "W");
+            publishBinarySensor("Battery Heating", NULL, "heating", "1", "0");
+            publishSensor("State", NULL, "state");
+            publishSensor("Number of Batterie Packs", "mdi:counter", "numPacks");
+
+            // ToDo: Include data points for packs
+            // for (const auto& [sn, value] : _packData){
+            // }
+
+            publishSensor("Solar Power MPPT 1", "mdi:solar-power", "solarPowerMppt1", "power", "measurement", "W");
+            publishSensor("Solar Power MPPT 2", "mdi:solar-power", "solarPowerMppt2", "power", "measurement", "W");
+            publishSensor("Total Output Power", NULL, "outputPower", "power", "measurement", "W");
+            publishSensor("Total Input Power", NULL, "inputPower", "power", "measurement", "W");
+            publishBinarySensor("Bypass State", NULL, "bypass", "1", "0");
+
+            publishSensor("Output Power Limit", NULL, "settings/outputLimitPower", "power", "settings", "W");
+            publishSensor("Input Power Limit", NULL, "settings/inputLimitPower", "power", "settings", "W");
+            publishSensor("Minimum State of Charge", NULL, "settings/stateOfChargeMin", NULL, "settings", "%");
+            publishSensor("Maximum State of Charge", NULL, "settings/stateOfChargeMax", NULL, "settings", "%");
+            publishSensor("Bypass Mode", NULL, "settings/bypassMode", "settings");
+            break;
     }
 
     _doPublish = false;

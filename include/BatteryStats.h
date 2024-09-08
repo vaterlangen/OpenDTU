@@ -282,7 +282,8 @@ class ZendureBatteryStats : public BatteryStats {
             void update(JsonObjectConst packData, unsigned int ms);
             bool isCharging() const { return  _state == 2; };
             bool isDischarging() const { return  _state == 1; };
-            uint16_t getCapacity() const { return 1920; }
+            uint16_t getCapacity() const { return _capacity; }
+            uint8_t getCellCount() const { return _cells; }
             std::string getStateString() const { return ZendureBatteryStats::getStateString(_state); };
 
         protected:
@@ -293,13 +294,17 @@ class ZendureBatteryStats : public BatteryStats {
             bool hasAlarmHighVoltage() const { return _voltage_total >= 58.4; }
             void setSerial(String serial);
 
+            void setFwVersion(uint32_t version) { _version = ZendureBatteryStats::parseVersion(version); }
+
             String _serial;
             String _name = "unknown";
             uint16_t _capacity = 0;
-            uint32_t _version;
+            uint8_t _cells = 15;
+            String _version;
             uint16_t _cell_voltage_min;
             uint16_t _cell_voltage_max;
             uint16_t _cell_voltage_spread;
+            uint16_t _cell_voltage_avg;
             float _cell_temperature_max;
             float _voltage_total;
             float _current;
@@ -309,8 +314,8 @@ class ZendureBatteryStats : public BatteryStats {
 
         private:
             uint32_t _lastUpdateTimestamp = 0;
+            uint32_t _lastSoCTimestamp = 0;
             uint32_t _totalVoltageTimestamp = 0;
-            uint32_t _totalCurrentTimestamp = 0;
 
     };
 
@@ -328,6 +333,7 @@ class ZendureBatteryStats : public BatteryStats {
         bool isDischarging() const { return  _state == 2; };
 
         static std::string getStateString(uint8_t state);
+        static String parseVersion(uint32_t version);
 
     protected:
         std::optional<ZendureBatteryStats::ZendurePackStats*> getPackData(String serial) const;
@@ -340,7 +346,10 @@ class ZendureBatteryStats : public BatteryStats {
         std::string getBypassModeString() const;
         std::string getStateString() const { return ZendureBatteryStats::getStateString(_state); };
         void calculateEfficiency();
-        void calculateAggregatedPackData();
+        void calculateAggregatedData();
+
+        void setHwVersion(uint32_t version) { if (version) { _hwversion = ZendureBatteryStats::parseVersion(version); } }
+        void setFwVersion(uint32_t version) { _fwversion = ZendureBatteryStats::parseVersion(version); }
 
         void setManufacture(const char* manufacture) {
             _manufacturer = String(manufacture);
@@ -371,6 +380,9 @@ class ZendureBatteryStats : public BatteryStats {
         uint16_t _cellMinMilliVolt;
         uint16_t _cellMaxMilliVolt;
         uint16_t _cellDeltaMilliVolt;
+        uint16_t _cellAvgMilliVolt;
+
+        float _electricLevel;
 
         float _soc_max;
         float _soc_min;
@@ -381,15 +393,18 @@ class ZendureBatteryStats : public BatteryStats {
 
         float _efficiency = 0.0;
         uint16_t _capacity;
+
         uint16_t _charge_power;
         uint16_t _discharge_power;
+        uint32_t _lastUpdateBatteryPower = 0;
+        uint32_t _lastUpdateVoltageLocal = 0;
         uint16_t _output_power;
         uint16_t _input_power;
         uint16_t _solar_power_1;
         uint16_t _solar_power_2;
 
-        uint16_t _remain_out_time;
-        uint16_t _remain_in_time;
+        int16_t _remain_out_time;
+        int16_t _remain_in_time;
 
         uint32_t _swVersion;
         uint32_t _hwVersion;

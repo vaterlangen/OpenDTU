@@ -254,6 +254,7 @@ export default defineComponent({
             zendureBypassModeList: [
                 { key: 0, value: 'Automatic' },
                 { key: 1, value: 'AlwaysOff' },
+                { key: 2, value: 'AlwaysOn' },
             ],
         };
     },

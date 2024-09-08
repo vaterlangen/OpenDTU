@@ -183,6 +183,7 @@ void ZendureBattery::onMqttMessageReport(espMqttClientTypes::MessageProperties c
     }
 
     auto obj = json.as<JsonObjectConst>();
+    bool updated = false;
 
     // validate input data
     // messageId has to be set to "123"
@@ -204,6 +205,7 @@ void ZendureBattery::onMqttMessageReport(espMqttClientTypes::MessageProperties c
             auto serial = Utils::getJsonElement<String>(battery, "sn");
             if (serial.has_value() && (*serial).length() == 15){
                 _stats->updatePackData(*serial, battery, ms);
+                updated = true;
             }else{
                 log("Invalid or missing serial of battery pack in '%s'", logValue.c_str());
             }
@@ -214,5 +216,10 @@ void ZendureBattery::onMqttMessageReport(espMqttClientTypes::MessageProperties c
     auto props = Utils::getJsonElement<JsonObjectConst>(obj, "properties", 1);
     if (props.has_value()){
         _stats->update(*props, ms);
+        updated = true;
+    }
+
+    if (updated){
+        _stats->calculateAggregatedData();
     }
 }
