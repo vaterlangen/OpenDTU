@@ -1004,7 +1004,7 @@ String ZendureBatteryStats::parseVersion(uint32_t version) {
     uint8_t bugfix = version & 0xFF;
 
     char buffer[16];
-    sprintf(buffer, "%d.%d.%d", major, minor, bugfix);
+    snprintf(buffer, sizeof(buffer), "%d.%d.%d", major, minor, bugfix);
     return String(buffer);
 }
 
