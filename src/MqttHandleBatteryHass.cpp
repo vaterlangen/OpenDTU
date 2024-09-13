@@ -195,6 +195,7 @@ void MqttHandleBatteryHassClass::loop()
             publishBinarySensor("Battery Heating", NULL, "heating", "1", "0");
             publishSensor("State", NULL, "state");
             publishSensor("Number of Batterie Packs", "mdi:counter", "numPacks");
+            publishSensor("Efficiency", NULL, "efficiency", NULL, "measurement", "%");
 
             // ToDo: Include data points for packs
             // for (const auto& [sn, value] : _packData){

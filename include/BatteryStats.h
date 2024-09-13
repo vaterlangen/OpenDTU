@@ -274,54 +274,125 @@ class MqttBatteryStats : public BatteryStats {
 class ZendureBatteryStats : public BatteryStats {
     friend class ZendureBattery;
 
-    class ZendurePackStats {
+    enum class State : uint8_t {
+        Idle        = 0,
+        Charging    = 1,
+        Discharging = 2
+    };
+
+    enum class BypassMode : uint8_t {
+        Automatic   = 0,
+        AlwaysOff   = 1,
+        AlwaysOn    = 2
+    };
+
+    public:
+        template <typename T>
+        static T stateToString(State state){
+            switch (state) {
+                case State::Idle:
+                    return "idle";
+                case State::Charging:
+                    return "charging";
+                case State::Discharging:
+                    return "discharging";
+                default:
+                    return "invalid";
+            }
+        }
+        template <typename T>
+        static T bypassModeToString(BypassMode state){
+            switch (state) {
+                case BypassMode::Automatic:
+                    return "automatic";
+                case BypassMode::AlwaysOff:
+                    return "alwaysoff";
+                case BypassMode::AlwaysOn:
+                    return "alwayson";
+                default:
+                    return "invalid";
+            }
+        }
+        inline static bool isDischarging(State state){
+            return state == State::Discharging;
+        }
+        inline static bool isCharging(State state){
+            return state == State::Charging;
+        }
+
+    class PackStats {
         friend class ZendureBatteryStats;
+        friend class ZendureBattery;
 
         public:
-            explicit ZendurePackStats(String serial){ setSerial(serial); }
-            void update(JsonObjectConst packData, unsigned int ms);
-            bool isCharging() const { return  _state == 2; };
-            bool isDischarging() const { return  _state == 1; };
-            uint16_t getCapacity() const { return _capacity; }
-            uint8_t getCellCount() const { return _cells; }
-            std::string getStateString() const { return ZendureBatteryStats::getStateString(_state); };
+            explicit PackStats(){ }
+            explicit PackStats(String serial){ setSerial(serial); }
+            virtual ~PackStats(){ }
+
+            inline String getSerial() const { return _serial; }
+            inline uint8_t getCellCount() const { return 15; }
+            virtual uint16_t getCapacity() const { return 0; }
+            virtual String getName() const { return "UNKOWN"; }
+
+            static PackStats* fromSerial(String serial){
+                if (serial.length() == 15) {
+                    if (serial.startsWith("AO4H")){
+                        return new AB1000(serial);
+                    }
+                    if (serial.startsWith("CO4H")){
+                        return new AB2000(serial);
+                    }
+                    return new PackStats(serial);
+                }
+                return nullptr;
+            };
 
         protected:
-            bool hasAlarmMaxTemp() const { return _cell_temperature_max >= 45; };
-            bool hasAlarmMinTemp() const { return _cell_temperature_max <= (isCharging() ? 0 : -20); };
-            bool hasAlarmLowSoC() const { return _soc_level < 5; }
-            bool hasAlarmLowVoltage() const { return _voltage_total <= 40.0; }
-            bool hasAlarmHighVoltage() const { return _voltage_total >= 58.4; }
-            void setSerial(String serial);
+            void setSerial(String serial) { _serial = serial; }
+            void setHwVersion(String version) { _hwversion = version; }
+            void setFwVersion(String version) { _fwversion = version; }
 
-            void setFwVersion(uint32_t version) { _version = ZendureBatteryStats::parseVersion(version); }
-
+        private:
             String _serial;
-            String _name = "unknown";
-            uint16_t _capacity = 0;
-            uint8_t _cells = 15;
-            String _version;
+
+            String _fwversion;
+            String _hwversion;
+
             uint16_t _cell_voltage_min;
             uint16_t _cell_voltage_max;
             uint16_t _cell_voltage_spread;
             uint16_t _cell_voltage_avg;
             float _cell_temperature_max;
+
             float _voltage_total;
             float _current;
             int16_t _power;
-            uint8_t _soc_level;
-            uint8_t _state;
+            float _soc_level;
+            State _state;
 
-        private:
             uint32_t _lastUpdateTimestamp = 0;
-            uint32_t _lastSoCTimestamp = 0;
-            uint32_t _totalVoltageTimestamp = 0;
 
+    };
+
+    class AB1000 : public PackStats {
+        public:
+            explicit AB1000(String serial){ setSerial(serial); }
+            virtual ~AB1000(){ }
+            inline uint16_t getCapacity() const override { return 960; }
+            inline String getName() const override { return "AB1000"; }
+    };
+
+    class AB2000 : public PackStats {
+        public:
+            explicit AB2000(String serial){ setSerial(serial); }
+            virtual ~AB2000(){ }
+            inline uint16_t getCapacity() const override { return 1920; }
+            inline String getName() const override { return "AB2000"; }
     };
 
     public:
         virtual ~ZendureBatteryStats(){
-            for (const auto& [key, item] : _packData){
+            for (const auto [index, item] : _packData){
                 delete item;
             }
             _packData.clear();
@@ -329,27 +400,16 @@ class ZendureBatteryStats : public BatteryStats {
         void mqttPublish() const;
         void getLiveViewData(JsonVariant& root) const;
 
-        bool isCharging() const { return  _state == 1; };
-        bool isDischarging() const { return  _state == 2; };
-
-        static std::string getStateString(uint8_t state);
-        static String parseVersion(uint32_t version);
-
     protected:
-        std::optional<ZendureBatteryStats::ZendurePackStats*> getPackData(String serial) const;
-        void updatePackData(String serial, JsonObjectConst packData, unsigned int ms);
-        void update(JsonObjectConst props, unsigned int ms);
+        std::optional<ZendureBatteryStats::PackStats*> getPackData(size_t index) const;
+        std::optional<ZendureBatteryStats::PackStats*> addPackData(size_t index, String serial);
+
         uint16_t getCapacity() const { return _capacity; };
         uint16_t getAvailableCapacity() const { return getCapacity() * (static_cast<float>(_soc_max - _soc_min) / 100.0); };
 
     private:
-        std::string getBypassModeString() const;
-        std::string getStateString() const { return ZendureBatteryStats::getStateString(_state); };
-        void calculateEfficiency();
-        void calculateAggregatedData();
-
-        void setHwVersion(uint32_t version) { if (version) { _hwversion = ZendureBatteryStats::parseVersion(version); } }
-        void setFwVersion(uint32_t version) { _fwversion = ZendureBatteryStats::parseVersion(version); }
+        void setHwVersion(String version) { _hwversion = version; }
+        void setFwVersion(String version) { _fwversion = version; }
 
         void setManufacture(const char* manufacture) {
             _manufacturer = String(manufacture);
@@ -364,6 +424,11 @@ class ZendureBatteryStats : public BatteryStats {
         void setSerial(String serial) {
             _serial = serial;
         }
+        void setSerial(std::optional<String> serial) {
+            if (serial.has_value()){
+                setSerial(*serial);
+            }
+        }
 
         void setDevice(const char* device) {
             _device = String(device);
@@ -374,7 +439,7 @@ class ZendureBatteryStats : public BatteryStats {
 
         String _device;
 
-        std::map<String, ZendurePackStats*> _packData = std::map<String, ZendurePackStats*>();
+        std::map<size_t, PackStats*> _packData = std::map<size_t, PackStats*>();
 
         float _cellTemperature;
         uint16_t _cellMinMilliVolt;
@@ -396,8 +461,6 @@ class ZendureBatteryStats : public BatteryStats {
 
         uint16_t _charge_power;
         uint16_t _discharge_power;
-        uint32_t _lastUpdateBatteryPower = 0;
-        uint32_t _lastUpdateVoltageLocal = 0;
         uint16_t _output_power;
         uint16_t _input_power;
         uint16_t _solar_power_1;
@@ -409,19 +472,12 @@ class ZendureBatteryStats : public BatteryStats {
         uint32_t _swVersion;
         uint32_t _hwVersion;
 
-        uint8_t _state;
+        State _state;
         uint8_t _num_batteries;
-        uint8_t _bypass_mode;
+        BypassMode _bypass_mode;
         bool _bypass_state;
         bool _auto_recover;
         bool _heat_state;
         bool _auto_shutdown;
         bool _buzzer;
-
-        bool _alarmLowSoC = false;
-        bool _alarmLowVoltage = false;
-        bool _alarmHightVoltage = false;
-        bool _alarmLowTemperature = false;
-        bool _alarmHighTemperature = false;
-
 };
