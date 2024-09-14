@@ -338,7 +338,7 @@ class ZendureBatteryStats : public BatteryStats {
         friend class ZendureBattery;
 
         public:
-            explicit PackStats() {}
+            PackStats() {}
             explicit PackStats(String serial) : _serial(serial) {}
             virtual ~PackStats(){ }
 
