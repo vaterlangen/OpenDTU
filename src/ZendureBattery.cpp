@@ -272,10 +272,7 @@ void ZendureBattery::onMqttMessageReport(espMqttClientTypes::MessageProperties c
     }
     if (!json["deviceId"].as<String>().equals(_deviceId)){
         return log("Invalid or missing 'deviceId' in '%s'", logValue.c_str());
-    }/*
-    if (!json["product"].as<String>().equals("solarFlow")){
-        return log("Invalid or missing 'product' in '%s'", logValue.c_str());
-    }*/
+    }
 
     auto props = Utils::getJsonElement<JsonObjectConst>(obj, ZENDURE_REPORT_PROPERTIES, 1);
     if (props.has_value()){
@@ -522,6 +519,7 @@ void ZendureBattery::onMqttMessageLog(espMqttClientTypes::MessageProperties cons
         //_stats->setVoltage(static_cast<float>(voltage) / 1000 / num, ms);
         _stats->setVoltage(v[ZENDURE_LOG_OFFSET_VOLTAGE].as<float>() / 10.0, ms);
         _stats->setCurrent(static_cast<float>(current) / 10.0, 1, ms);
+        _stats->setDischargeCurrentLimit(static_cast<float>(_stats->_inverse_max) / _stats->getVoltage(), ms);
         if (capacity){
             _stats->_capacity = capacity;
         }
