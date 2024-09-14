@@ -192,7 +192,7 @@
                 </template>
             </CardElement>
 
-            <template v-if="batteryConfigList.enabled && batteryConfigList.provider == 5">
+            <template v-if="batteryConfigList.enabled && batteryConfigList.provider == 7">
                 <CardElement :text="$t('batteryadmin.ZendureConfiguration')" textVariant="text-bg-primary" addSpace>
                     <div class="row mb-3">
                         <label for="zendure_device_type" class="col-sm-2 col-form-label">
@@ -329,7 +329,7 @@ export default defineComponent({
                 { key: 2, value: 'Mqtt' },
                 { key: 3, value: 'Victron' },
                 { key: 4, value: 'PytesCan' },
-                { key: 5, value: 'ZendureLocalMqtt' },
+                { key: 7, value: 'ZendureLocalMqtt' },
             ],
             jkBmsInterfaceTypeList: [
                 { key: 0, value: 'Uart' },
