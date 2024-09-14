@@ -40,7 +40,6 @@ bool ZendureBattery::init(bool verboseLogging)
             return false;
     }
 
-    //_baseTopic = "/73bkTV/sU59jtkw/";
     if (strlen(config.Battery.ZendureDeviceId) != 8) {
         MessageOutput.printf("ZendureBattery: Invalid device id!");
         return false;
@@ -266,7 +265,6 @@ void ZendureBattery::onMqttMessageReport(espMqttClientTypes::MessageProperties c
     // validate input data
     // messageId has to be set to "123"
     // deviceId has to be set to the configured deviceId
-    // product has to be set to "solarFlow"
     if (!json["messageId"].as<String>().equals("123")){
         return log("Invalid or missing 'messageId' in '%s'", logValue.c_str());
     }
@@ -563,26 +561,10 @@ String ZendureBattery::parseVersion(uint32_t version) {
 void ZendureBattery::calculateEfficiency() {
     float in = static_cast<float>(_stats->_input_power);
     float out = static_cast<float>(_stats->_output_power);
-    float charge = static_cast<float>(_stats->_charge_power);
-    float discharge = static_cast<float>(_stats->_discharge_power);
     float efficiency = 0.0;
 
-    // Variante A
-    // in += efficiency ? discharge / efficiency : 0.0;
-    // out += charge * efficiency;
-
-    // Variante B
-    //auto _battery_power = charge ? charge : -discharge
-    // if (_battery_power){
-    //     efficiency = (charge - discharge) / static_cast<float>(_battery_power);
-    // }
-
-    // in += _battery_power < 0 ? static_cast<float>(-_battery_power) : 0.0;
-    // out += _battery_power > 0 ?static_cast<float>( _battery_power) : 0.0;
-
-    // Variante C
-    in += discharge;
-    out += charge;
+    in += static_cast<float>(_stats->_discharge_power);
+    out += static_cast<float>(_stats->_charge_power);
 
     efficiency = in ? out / in : 0.0;
 
