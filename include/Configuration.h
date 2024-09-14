@@ -291,11 +291,14 @@ struct CONFIG_T {
         char MqttVoltageJsonPath[BATTERY_JSON_MAX_PATH_STRLEN + 1];
         BatteryVoltageUnit MqttVoltageUnit;
         uint8_t ZendureDeviceType;
-        char ZendureDeviceSerial[ZENDURE_MAX_SERIAL_STRLEN + 1];
+        char ZendureDeviceId[ZENDURE_MAX_SERIAL_STRLEN + 1];
+        uint8_t ZendurePollingInterval;
         uint8_t ZendureMinSoC;
         uint8_t ZendureMaxSoC;
         uint8_t ZendureBypassMode;
         uint16_t ZendureMaxOutput;
+        bool ZendureAutoShutdown;
+        bool ZendureForceLimit;
     } Battery;
 
     struct {

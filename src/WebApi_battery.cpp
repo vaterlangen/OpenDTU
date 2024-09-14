@@ -46,11 +46,14 @@ void WebApiBatteryClass::onStatus(AsyncWebServerRequest* request)
     root["mqtt_voltage_json_path"] = config.Battery.MqttVoltageJsonPath;
     root["mqtt_voltage_unit"] = config.Battery.MqttVoltageUnit;
     root["zendure_device_type"] = config.Battery.ZendureDeviceType;
-    root["zendure_device_serial"] = config.Battery.ZendureDeviceSerial;
+    root["zendure_device_id"] = config.Battery.ZendureDeviceId;
+    root["zendure_polling_interval"] = config.Battery.ZendurePollingInterval;
     root["zendure_soc_min"] = config.Battery.ZendureMinSoC;
     root["zendure_soc_max"] = config.Battery.ZendureMaxSoC;
     root["zendure_bypass_mode"] = config.Battery.ZendureBypassMode;
     root["zendure_max_output"] = config.Battery.ZendureMaxOutput;
+    root["zendure_auto_shutdown"] = config.Battery.ZendureAutoShutdown;
+    root["zendure_force_limit"] = config.Battery.ZendureForceLimit;
 
     response->setLength();
     request->send(response);
@@ -98,11 +101,14 @@ void WebApiBatteryClass::onAdminPost(AsyncWebServerRequest* request)
     strlcpy(config.Battery.MqttVoltageJsonPath, root["mqtt_voltage_json_path"].as<String>().c_str(), sizeof(config.Battery.MqttVoltageJsonPath));
     config.Battery.MqttVoltageUnit = static_cast<BatteryVoltageUnit>(root["mqtt_voltage_unit"].as<uint8_t>());
     config.Battery.ZendureDeviceType = root["zendure_device_type"].as<uint8_t>();
-    strlcpy(config.Battery.ZendureDeviceSerial, root["zendure_device_serial"].as<String>().c_str(), sizeof(config.Battery.ZendureDeviceSerial));
+    strlcpy(config.Battery.ZendureDeviceId, root["zendure_device_id"].as<String>().c_str(), sizeof(config.Battery.ZendureDeviceId));
+    config.Battery.ZendurePollingInterval = root["zendure_polling_interval"].as<uint8_t>();
     config.Battery.ZendureMinSoC = root["zendure_soc_min"].as<uint8_t>();
     config.Battery.ZendureMaxSoC = root["zendure_soc_max"].as<uint8_t>();
     config.Battery.ZendureBypassMode = root["zendure_bypass_mode"].as<uint8_t>();
     config.Battery.ZendureMaxOutput = root["zendure_max_output"].as<uint16_t>();
+    config.Battery.ZendureAutoShutdown = root["zendure_auto_shutdown"].as<bool>();
+    config.Battery.ZendureForceLimit = root["zendure_force_limit"].as<bool>();
 
     WebApi.writeConfig(retMsg);
 

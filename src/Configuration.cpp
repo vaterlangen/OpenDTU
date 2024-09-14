@@ -262,11 +262,15 @@ bool ConfigurationClass::write()
     battery["mqtt_voltage_json_path"] = config.Battery.MqttVoltageJsonPath;
     battery["mqtt_voltage_unit"] = config.Battery.MqttVoltageUnit;
     battery["zendure_device_type"] = config.Battery.ZendureDeviceType;
-    battery["zendure_device_serial"] = config.Battery.ZendureDeviceSerial;
+    battery["zendure_device_id"] = config.Battery.ZendureDeviceId;
+    battery["zendure_polling_interval"] = config.Battery.ZendurePollingInterval;
     battery["zendure_soc_min"] = config.Battery.ZendureMinSoC;
     battery["zendure_soc_max"] = config.Battery.ZendureMaxSoC;
     battery["zendure_bypass_mode"] = config.Battery.ZendureBypassMode;
     battery["zendure_max_output"] = config.Battery.ZendureMaxOutput;
+    battery["zendure_auto_shutdown"] = config.Battery.ZendureAutoShutdown;
+    battery["zendure_force_limit"] = config.Battery.ZendureForceLimit;
+
 
     JsonObject huawei = doc["huawei"].to<JsonObject>();
     huawei["enabled"] = config.Huawei.Enabled;
@@ -618,11 +622,14 @@ bool ConfigurationClass::read()
     strlcpy(config.Battery.MqttVoltageJsonPath, battery["mqtt_voltage_json_path"] | "", sizeof(config.Battery.MqttVoltageJsonPath));
     config.Battery.MqttVoltageUnit = battery["mqtt_voltage_unit"] | BatteryVoltageUnit::Volts;
     config.Battery.ZendureDeviceType = battery["zendure_device_type"] | BATTERY_ZENDURE_DEVICE;
-    strlcpy(config.Battery.ZendureDeviceSerial, battery["zendure_device_serial"] | "", sizeof(config.Battery.ZendureDeviceSerial));
+    strlcpy(config.Battery.ZendureDeviceId, battery["zendure_device_id"] | "", sizeof(config.Battery.ZendureDeviceId));
+    config.Battery.ZendurePollingInterval = battery["zendure_polling_interval"] | BATTERY_ZENDURE_POLLING_INTERVAL;
     config.Battery.ZendureMinSoC = battery["zendure_soc_min"] | BATTERY_ZENDURE_MIN_SOC;
     config.Battery.ZendureMaxSoC = battery["zendure_soc_max"] | BATTERY_ZENDURE_MAX_SOC;
     config.Battery.ZendureBypassMode = battery["zendure_bypass_mode"] | BATTERY_ZENDURE_BYPASS_MODE;
     config.Battery.ZendureMaxOutput = battery["zendure_max_output"] | BATTERY_ZENDURE_MAX_OUTPUT;
+    config.Battery.ZendureAutoShutdown = battery["zendure_auto_shutdown"] | BATTERY_ZENDURE_AUTO_SHUTDOWN;
+    config.Battery.ZendureForceLimit = battery["zendure_force_limit"] | BATTERY_ZENDURE_FORCE_LIMIT;
 
     JsonObject huawei = doc["huawei"];
     config.Huawei.Enabled = huawei["enabled"] | HUAWEI_ENABLED;

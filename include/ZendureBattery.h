@@ -4,7 +4,7 @@
 #include "Battery.h"
 #include <espMqttClient.h>
 
-
+// DeviceIDs for compatible Solarflow devices
 #define ZENDURE_HUB1200     "73bkTV"
 #define ZENDURE_HUB2000     "A8yh63"
 #define ZENDURE_AIO2400     "yWF7hV)"
@@ -79,7 +79,8 @@
 #define ZENDURE_LOG_OFFSET_UNKOWN_50                92              // ? => always 0
 #define ZENDURE_LOG_OFFSET_UNKOWN_51                93              // ? => always 0
 
-
+#define ZENDURE_REPORT_PACK_DATE                    "packData"
+#define ZENDURE_REPORT_PROPERTIES                   "properties"
 #define ZENDURE_REPORT_MIN_SOC                      "minSoc"
 #define ZENDURE_REPORT_MAX_SOC                      "socSet"
 #define ZENDURE_REPORT_INPUT_LIMIT                  "inputLimit"
@@ -87,13 +88,23 @@
 #define ZENDURE_REPORT_INVERSE_MAX_POWER            "inverseMaxPower"
 #define ZENDURE_REPORT_PACK_STATE                   "packState"
 #define ZENDURE_REPORT_HEAT_STATE                   "heatState"
-#define ZENDURE_REPORT_HUB_STATE                    "hubState"
+#define ZENDURE_REPORT_AUTO_SHUTDOWN                "hubState"
 #define ZENDURE_REPORT_BUZZER_SWITCH                "buzzerSwitch"
 #define ZENDURE_REPORT_REMAIN_OUT_TIME              "remainOutTime"
 #define ZENDURE_REPORT_REMAIN_IN_TIME               "remainInputTime"
 #define ZENDURE_REPORT_FW_VERSION                   "softVersion"
 #define ZENDURE_REPORT_HW_VERSION                   "masterhaerVersion"
 #define ZENDURE_REPORT_SERIAL                       "sn"
+#define ZENDURE_REPORT_STATE                        "state"
+#define ZENDURE_REPORT_AUTO_RECOVER                 "autoRecover"
+#define ZENDURE_REPORT_BYPASS_STATE                 "pass"
+#define ZENDURE_REPORT_BYPASS_MODE                  "passMode"
+#define ZENDURE_REPORT_PV_BRAND                     "pvBrand"
+#define ZENDURE_REPORT_SMART_MODE                   "smartMode"
+#define ZENDURE_REPORT_PV_AUTO_MODEL                "autoModel"
+
+
+#define ZENDURE_NO_REDUCED_UPDATE
 
 class ZendureBattery : public BatteryProvider {
 public:
@@ -104,7 +115,7 @@ public:
     void loop() final;
     std::shared_ptr<BatteryStats> getStats() const final { return _stats; }
 
-    uint16_t updateOutputLimit(uint16_t limit);
+    uint16_t setOutputLimit(uint16_t limit);
 
 protected:
     void timesync();
@@ -115,26 +126,34 @@ private:
 
     bool _verboseLogging = false;
 
-    uint32_t _partitialUpdateRateMs;
-    uint64_t _nextPartitialUpdate;
+#ifndef ZENDURE_NO_REDUCED_UPDATE
+    uint32_t _rateUpdateMs;
+    uint64_t _nextUpdate;
+#endif
 
-    uint32_t _fullUpdateRateMs;
+    uint32_t _rateFullUpdateMs;
     uint64_t _nextFullUpdate;
 
-    uint32_t _timesyncRateMs;
+    uint32_t _rateTimesyncMs;
     uint64_t _nextTimesync;
 
     String _deviceId;
 
     String _baseTopic;
-    String _logTopic;
-    String _readReplyTopic;
-    String _reportTopic;
-    String _readTopic;
-    String _writeTopic;
-    String _timesyncTopic;
-    String _settingsPayload;
-    String _updatePayload;
+    String _topicLog;
+    String _topicReadReply;
+    String _topicReport;
+    String _topicRead;
+    String _topicWrite;
+    String _topicTimesync;
+
+    String _payloadSettings;
+    String _payloadFullUpdate;
+#ifndef ZENDURE_NO_REDUCED_UPDATE
+    String _payloadUpdate;
+#endif
+
+
     std::shared_ptr<ZendureBatteryStats> _stats = std::make_shared<ZendureBatteryStats>();
 
     void onMqttMessageReport(espMqttClientTypes::MessageProperties const& properties,
@@ -143,6 +162,8 @@ private:
     void onMqttMessageLog(espMqttClientTypes::MessageProperties const& properties,
             char const* topic, uint8_t const* payload, size_t len, size_t index, size_t total);
 
+#ifndef ZENDURE_NO_REDUCED_UPDATE
     void onMqttMessageRead(espMqttClientTypes::MessageProperties const& properties,
             char const* topic, uint8_t const* payload, size_t len, size_t index, size_t total);
+#endif
 };

@@ -140,11 +140,22 @@
                     </div>
 
                     <InputElement
-                        :label="$t('batteryadmin.ZendureDeviceSerial')"
-                        v-model="batteryConfigList.zendure_device_serial"
+                        :label="$t('batteryadmin.ZendureDeviceId')"
+                        v-model="batteryConfigList.zendure_device_id"
                         type="text"
                         minlength="8"
                         maxlength="8"
+                        :tooltip="$t('batteryadmin.ZendureDeviceIdDescription')"
+                    />
+
+                    <InputElement
+                        :label="$t('batteryadmin.PollingInterval')"
+                        v-model="batteryConfigList.zendure_polling_interval"
+                        type="number"
+                        min="10"
+                        max="120"
+                        step="1"
+                        :postfix="$t('batteryadmin.Seconds')"
                     />
 
                     <InputElement
@@ -155,6 +166,14 @@
                         max="2000"
                         step="100"
                         :postfix="$t('batteryadmin.Watt')"
+                    />
+
+                    <InputElement
+                        v-show="batteryConfigList.zendure_force_limit"
+                        :label="$t('batteryadmin.ZendureForceLimit')"
+                        v-model="batteryConfigList.zendure_force_limit"
+                        type="checkbox"
+                        :tooltip="$t('batteryadmin.ZendureForceLimitDescription')"
                     />
 
                     <InputElement
@@ -193,6 +212,14 @@
                             </select>
                         </div>
                     </div>
+
+                    <InputElement
+                        v-show="batteryConfigList.zendure_auto_shutdown"
+                        :label="$t('batteryadmin.ZendureAutoShutdown')"
+                        v-model="batteryConfigList.zendure_auto_shutdown"
+                        type="checkbox"
+                        :tooltip="$t('batteryadmin.ZendureAutoShutdownDescription')"
+                    />
                 </CardElement>
             </template>
 

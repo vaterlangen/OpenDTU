@@ -277,150 +277,143 @@ class ZendureBatteryStats : public BatteryStats {
     enum class State : uint8_t {
         Idle        = 0,
         Charging    = 1,
-        Discharging = 2
+        Discharging = 2,
+        Invalid     = 255
     };
 
     enum class BypassMode : uint8_t {
         Automatic   = 0,
         AlwaysOff   = 1,
-        AlwaysOn    = 2
+        AlwaysOn    = 2,
+        Invalid     = 255
     };
 
-    public:
-        template <typename T>
-        static T stateToString(State state){
-            switch (state) {
-                case State::Idle:
-                    return "idle";
-                case State::Charging:
-                    return "charging";
-                case State::Discharging:
-                    return "discharging";
-                default:
-                    return "invalid";
-            }
+    template <typename T>
+    static T stateToString(State state){
+        switch (state) {
+            case State::Idle:
+                return "idle";
+            case State::Charging:
+                return "charging";
+            case State::Discharging:
+                return "discharging";
+            default:
+                return "invalid";
         }
-        template <typename T>
-        static T bypassModeToString(BypassMode state){
-            switch (state) {
-                case BypassMode::Automatic:
-                    return "automatic";
-                case BypassMode::AlwaysOff:
-                    return "alwaysoff";
-                case BypassMode::AlwaysOn:
-                    return "alwayson";
-                default:
-                    return "invalid";
-            }
+    }
+    template <typename T>
+    static T bypassModeToString(BypassMode state){
+        switch (state) {
+            case BypassMode::Automatic:
+                return "automatic";
+            case BypassMode::AlwaysOff:
+                return "alwaysoff";
+            case BypassMode::AlwaysOn:
+                return "alwayson";
+            default:
+                return "invalid";
         }
-        inline static bool isDischarging(State state){
-            return state == State::Discharging;
-        }
-        inline static bool isCharging(State state){
-            return state == State::Charging;
-        }
+    }
+    inline static bool isDischarging(State state){
+        return state == State::Discharging;
+    }
+    inline static bool isCharging(State state){
+        return state == State::Charging;
+    }
 
     class PackStats {
         friend class ZendureBatteryStats;
         friend class ZendureBattery;
 
         public:
-            explicit PackStats(){ }
-            explicit PackStats(String serial){ setSerial(serial); }
+            explicit PackStats() {}
+            explicit PackStats(String serial) : _serial(serial) {}
             virtual ~PackStats(){ }
 
-            inline String getSerial() const { return _serial; }
-            inline uint8_t getCellCount() const { return 15; }
-            virtual uint16_t getCapacity() const { return 0; }
-            virtual String getName() const { return "UNKOWN"; }
+            String getSerial() const { return _serial; }
 
-            static PackStats* fromSerial(String serial){
+            inline uint8_t getCellCount() const { return _cellCount; }
+            inline uint16_t getCapacity() const { return _capacity; }
+            inline String getName() const { return _name; }
+
+            static std::shared_ptr<PackStats> fromSerial(String serial){
                 if (serial.length() == 15) {
                     if (serial.startsWith("AO4H")){
-                        return new AB1000(serial);
+                        // return std::make_shared<PackStats>(AB1000(serial));
+                        return std::make_shared<PackStats>(PackStats(serial, "AB1000", 960));
                     }
                     if (serial.startsWith("CO4H")){
-                        return new AB2000(serial);
+                        // return std::make_shared<PackStats>(AB2000(serial));
+                        return std::make_shared<PackStats>(PackStats(serial, "AB2000", 1920));
                     }
-                    return new PackStats(serial);
+                    return std::make_shared<PackStats>(PackStats(serial));
                 }
                 return nullptr;
             };
 
         protected:
+            explicit PackStats(String serial, String name, uint16_t capacity, uint8_t cellCount = 15) :
+                _serial(serial), _name(name), _capacity(capacity), _cellCount(cellCount){}
             void setSerial(String serial) { _serial = serial; }
-            void setHwVersion(String version) { _hwversion = version; }
-            void setFwVersion(String version) { _fwversion = version; }
+            void setHwVersion(String&& version) { _hwversion = std::move(version); }
+            void setFwVersion(String&& version) { _fwversion = std::move(version); }
 
         private:
-            String _serial;
+            String _serial = "";
+            String _name = "UNKOWN";
+            uint16_t _capacity = 0;
+            uint8_t _cellCount = 15;
 
-            String _fwversion;
-            String _hwversion;
+            String _fwversion = "";
+            String _hwversion = "";
 
-            uint16_t _cell_voltage_min;
-            uint16_t _cell_voltage_max;
-            uint16_t _cell_voltage_spread;
-            uint16_t _cell_voltage_avg;
-            float _cell_temperature_max;
+            uint16_t _cell_voltage_min = 0;
+            uint16_t _cell_voltage_max = 0;
+            uint16_t _cell_voltage_spread = 0;
+            uint16_t _cell_voltage_avg = 0;
+            int16_t _cell_temperature_max = 0;
 
-            float _voltage_total;
-            float _current;
-            int16_t _power;
-            float _soc_level;
-            State _state;
+            float _voltage_total = 0.0;
+            float _current = 0.0;
+            int16_t _power = 0;
+            float _soc_level = 0.0;
+            State _state = State::Invalid;
 
-            uint32_t _lastUpdateTimestamp = 0;
-
+            uint32_t _lastUpdate = 0;
     };
 
-    class AB1000 : public PackStats {
-        public:
-            explicit AB1000(String serial){ setSerial(serial); }
-            virtual ~AB1000(){ }
-            inline uint16_t getCapacity() const override { return 960; }
-            inline String getName() const override { return "AB1000"; }
-    };
+    // class AB1000 : public PackStats {
+    //     public:
+    //         explicit AB1000(String serial) : PackStats(serial, "AB1000", 960) {}
+    //         virtual ~AB1000(){ }
+    // };
 
-    class AB2000 : public PackStats {
-        public:
-            explicit AB2000(String serial){ setSerial(serial); }
-            virtual ~AB2000(){ }
-            inline uint16_t getCapacity() const override { return 1920; }
-            inline String getName() const override { return "AB2000"; }
-    };
+    // class AB2000 : public PackStats {
+    //     public:
+    //         explicit AB2000(String serial) : PackStats(serial, "AB2000", 1920) {}
+    //         virtual ~AB2000(){ }
+    // };
 
     public:
-        virtual ~ZendureBatteryStats(){
-            for (const auto [index, item] : _packData){
-                delete item;
-            }
-            _packData.clear();
-        }
+        ZendureBatteryStats() { _manufacturer = String("Zendure"); }
         void mqttPublish() const;
         void getLiveViewData(JsonVariant& root) const;
 
     protected:
-        std::optional<ZendureBatteryStats::PackStats*> getPackData(size_t index) const;
-        std::optional<ZendureBatteryStats::PackStats*> addPackData(size_t index, String serial);
+        std::optional<std::shared_ptr<ZendureBatteryStats::PackStats> > getPackData(size_t index) const;
+        std::optional<std::shared_ptr<ZendureBatteryStats::PackStats> > addPackData(size_t index, String serial);
 
         uint16_t getCapacity() const { return _capacity; };
         uint16_t getAvailableCapacity() const { return getCapacity() * (static_cast<float>(_soc_max - _soc_min) / 100.0); };
 
     private:
-        void setHwVersion(String version) { _hwversion = version; }
-        void setFwVersion(String version) { _fwversion = version; }
-
-        void setManufacture(const char* manufacture) {
-            _manufacturer = String(manufacture);
-            if (_device){
-                _manufacturer += " " + _device;
+        void setHwVersion(String&& version) {
+            if (!version.isEmpty()){
+                _hwversion = _device + " (" + std::move(version) + ")";
             }
         }
+        void setFwVersion(String&& version) { _fwversion = std::move(version); }
 
-        void setSerial(const char* serial) {
-            _serial = String(serial);
-        }
         void setSerial(String serial) {
             _serial = serial;
         }
@@ -430,54 +423,46 @@ class ZendureBatteryStats : public BatteryStats {
             }
         }
 
-        void setDevice(const char* device) {
-            _device = String(device);
-        }
-        void setDevice(String device) {
-            _device = device;
+        void setDevice(String&& device) {
+            _device = std::move(device);
         }
 
-        String _device;
+        String _device = "Unkown";
 
-        std::map<size_t, PackStats*> _packData = std::map<size_t, PackStats*>();
+        std::map<size_t, std::shared_ptr<PackStats>> _packData = std::map<size_t, std::shared_ptr<PackStats> >();
 
-        float _cellTemperature;
-        uint16_t _cellMinMilliVolt;
-        uint16_t _cellMaxMilliVolt;
-        uint16_t _cellDeltaMilliVolt;
-        uint16_t _cellAvgMilliVolt;
+        int16_t _cellTemperature = 0;
+        uint16_t _cellMinMilliVolt = 0;
+        uint16_t _cellMaxMilliVolt = 0;
+        uint16_t _cellDeltaMilliVolt = 0;
+        uint16_t _cellAvgMilliVolt = 0;
 
-        float _electricLevel;
+        float _soc_max = 0.0;
+        float _soc_min = 0.0;
 
-        float _soc_max;
-        float _soc_min;
-
-        uint16_t _inverse_max;
-        uint16_t _input_limit;
-        uint16_t _output_limit;
+        uint16_t _inverse_max = 0;
+        uint16_t _input_limit = 0;
+        uint16_t _output_limit = 0;
 
         float _efficiency = 0.0;
-        uint16_t _capacity;
+        uint16_t _capacity = 0;
 
-        uint16_t _charge_power;
-        uint16_t _discharge_power;
-        uint16_t _output_power;
-        uint16_t _input_power;
-        uint16_t _solar_power_1;
-        uint16_t _solar_power_2;
+        uint16_t _charge_power = 0;
+        uint16_t _discharge_power = 0;
+        uint16_t _output_power = 0;
+        uint16_t _input_power = 0;
+        uint16_t _solar_power_1 = 0;
+        uint16_t _solar_power_2 = 0;
 
-        int16_t _remain_out_time;
-        int16_t _remain_in_time;
+        int16_t _remain_out_time = 0;
+        int16_t _remain_in_time = 0;
 
-        uint32_t _swVersion;
-        uint32_t _hwVersion;
-
-        State _state;
-        uint8_t _num_batteries;
-        BypassMode _bypass_mode;
-        bool _bypass_state;
-        bool _auto_recover;
-        bool _heat_state;
-        bool _auto_shutdown;
-        bool _buzzer;
+        State _state = State::Invalid;
+        uint8_t _num_batteries = 0;
+        BypassMode _bypass_mode = BypassMode::Invalid;
+        bool _bypass_state = false;
+        bool _auto_recover = false;
+        bool _heat_state = false;
+        bool _auto_shutdown = false;
+        bool _buzzer = false;
 };

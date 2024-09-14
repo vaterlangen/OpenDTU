@@ -41,86 +41,96 @@ bool ZendureBattery::init(bool verboseLogging)
     }
 
     //_baseTopic = "/73bkTV/sU59jtkw/";
-    if (strlen(config.Battery.ZendureDeviceSerial) != 8) {
+    if (strlen(config.Battery.ZendureDeviceId) != 8) {
         MessageOutput.printf("ZendureBattery: Invalid device id!");
         return false;
     }
 
+    // setup static device info
+    _stats->setDevice(std::move(deviceName));
+
     // store device ID as we will need them for checking when receiving messages
-    _deviceId = config.Battery.ZendureDeviceSerial;
+    _deviceId = config.Battery.ZendureDeviceId;
 
     _baseTopic = "/" + deviceType + "/" + _deviceId + "/";
-
-    _logTopic = _baseTopic + "log";
-    _reportTopic = _baseTopic + "properties/report";
-    _timesyncTopic = "iot" + _baseTopic + "time-sync/reply";
-    _readReplyTopic = _baseTopic + "properties/read/reply";
-
-    _readTopic = "iot" + _baseTopic + "properties/read";
-    _writeTopic = "iot" + _baseTopic + "properties/write";
+    _topicRead = "iot" + _baseTopic + "properties/read";
+    _topicWrite = "iot" + _baseTopic + "properties/write";
 
     // subscribe for log messages
-    MqttSettings.subscribe(_logTopic, 0/*QoS*/,
+    _topicLog = _baseTopic + "log";
+    MqttSettings.subscribe(_topicLog, 0/*QoS*/,
             std::bind(&ZendureBattery::onMqttMessageLog,
                 this, std::placeholders::_1, std::placeholders::_2,
                 std::placeholders::_3, std::placeholders::_4,
                 std::placeholders::_5, std::placeholders::_6)
             );
     if (_verboseLogging) {
-        MessageOutput.printf("ZendureBattery: Subscribed to '%s' for status readings\r\n", _logTopic.c_str());
+        MessageOutput.printf("ZendureBattery: Subscribed to '%s' for status readings\r\n", _topicLog.c_str());
     }
 
     // subscribe for report messages
-    MqttSettings.subscribe(_reportTopic, 0/*QoS*/,
+    _topicReport = _baseTopic + "properties/report";
+    MqttSettings.subscribe(_topicReport, 0/*QoS*/,
             std::bind(&ZendureBattery::onMqttMessageReport,
                 this, std::placeholders::_1, std::placeholders::_2,
                 std::placeholders::_3, std::placeholders::_4,
                 std::placeholders::_5, std::placeholders::_6)
             );
     if (_verboseLogging) {
-        MessageOutput.printf("ZendureBattery: Subscribed to '%s' for status readings\r\n", _reportTopic.c_str());
+        MessageOutput.printf("ZendureBattery: Subscribed to '%s' for status readings\r\n", _topicReport.c_str());
     }
 
+#ifndef ZENDURE_NO_REDUCED_UPDATE
     // subscribe for read messages
-    MqttSettings.subscribe(_readReplyTopic, 0/*QoS*/,
+    _topicReadReply = _baseTopic + "properties/read/reply";
+    MqttSettings.subscribe(_topicReadReply, 0/*QoS*/,
             std::bind(&ZendureBattery::onMqttMessageReport,
                 this, std::placeholders::_1, std::placeholders::_2,
                 std::placeholders::_3, std::placeholders::_4,
                 std::placeholders::_5, std::placeholders::_6)
             );
     if (_verboseLogging) {
-        MessageOutput.printf("ZendureBattery: Subscribed to '%s' for status readings\r\n", _readReplyTopic.c_str());
+        MessageOutput.printf("ZendureBattery: Subscribed to '%s' for status readings\r\n", _topicReadReply.c_str());
     }
 
-    _partitialUpdateRateMs = 12 * 1000;
-    _fullUpdateRateMs = 120 * 1000;
-    _timesyncRateMs = 60 * 60 * 1000;
-    _nextPartitialUpdate = 0;
-    _nextFullUpdate = 5 * 1000 + millis();
-    _nextTimesync = 0;
+    _rateUpdateMs       = min(static_cast<uint32_t>(config.Battery.ZendurePollingInterval * 100), 10U * 1000);
+    _nextUpdate         = 0;
+#endif
 
-    // setup some device info
-    _stats->setManufacture("Zendure");
-    _stats->setDevice(deviceName);
+    _rateFullUpdateMs   = config.Battery.ZendurePollingInterval * 1000;
+    _nextFullUpdate     = 0;
+    _rateTimesyncMs     = 3600 * 1000;
+    _nextTimesync       = 0;
 
     // pre-generate the settings request
     JsonDocument root;
-    JsonVariant prop = root["properties"].to<JsonObject>();
-    prop["pvBrand"] = 1;
-    prop["autoRecover"] = 1;
-    prop["buzzerSwitch"] = 0;
-    prop["passMode"] = config.Battery.ZendureBypassMode;
-    prop["socSet"] = config.Battery.ZendureMaxSoC * 10;
-    prop["minSoc"] = config.Battery.ZendureMinSoC * 10;
-    //prop["outputLimit"] = config.Battery.ZendureMaxOutput;
-    prop["inverseMaxPower"] = config.Battery.ZendureMaxOutput;
-    prop["smartMode"] = 0;
-    prop["autoModel"] = 0;
-    serializeJson(root, _settingsPayload);
+    JsonVariant prop = root[ZENDURE_REPORT_PROPERTIES].to<JsonObject>();
+    prop[ZENDURE_REPORT_PV_BRAND] = 1; // means Hoymiles
+    prop[ZENDURE_REPORT_PV_AUTO_MODEL] = 0; // we did static setup
+    prop[ZENDURE_REPORT_AUTO_RECOVER] = static_cast<uint8_t>(config.Battery.ZendureBypassMode == static_cast<uint8_t>(ZendureBatteryStats::BypassMode::Automatic));
+    prop[ZENDURE_REPORT_AUTO_SHUTDOWN] = config.Battery.ZendureAutoShutdown;
+    prop[ZENDURE_REPORT_BUZZER_SWITCH] = 0; // disable, as it is anoying
+    prop[ZENDURE_REPORT_BYPASS_MODE] = config.Battery.ZendureBypassMode;
+    prop[ZENDURE_REPORT_MAX_SOC] = config.Battery.ZendureMaxSoC * 10;
+    prop[ZENDURE_REPORT_MIN_SOC] = config.Battery.ZendureMinSoC * 10;
+    if (config.Battery.ZendureForceLimit){
+        prop[ZENDURE_REPORT_OUTPUT_LIMIT] = config.Battery.ZendureMaxOutput;
+    }
+    prop[ZENDURE_REPORT_INVERSE_MAX_POWER] = config.Battery.ZendureMaxOutput;
+    prop[ZENDURE_REPORT_SMART_MODE] = 0; // should be disabled
+    serializeJson(root, _payloadSettings);
 
+    // pre-generate the full update request
+    root.clear();
+    JsonArray array = root[ZENDURE_REPORT_PROPERTIES].to<JsonArray>();
+    array.add("getAll");
+    array.add("getInfo");
+    serializeJson(root, _payloadFullUpdate);
+
+#ifndef ZENDURE_NO_REDUCED_UPDATE
     // pre-generate the partitial update request
     root.clear();
-    JsonArray array = root["properties"].to<JsonArray>();
+    array = root[ZENDURE_REPORT_PROPERTIES].to<JsonArray>();
     array.add(ZENDURE_REPORT_MIN_SOC);
     array.add(ZENDURE_REPORT_MAX_SOC);
     array.add(ZENDURE_REPORT_INPUT_LIMIT);
@@ -128,62 +138,68 @@ bool ZendureBattery::init(bool verboseLogging)
     array.add(ZENDURE_REPORT_INVERSE_MAX_POWER);
     array.add(ZENDURE_REPORT_PACK_STATE);
     array.add(ZENDURE_REPORT_HEAT_STATE);
-    array.add(ZENDURE_REPORT_HUB_STATE);
+    array.add(ZENDURE_REPORT_AUTO_SHUTDOWN);
     array.add(ZENDURE_REPORT_BUZZER_SWITCH);
     array.add(ZENDURE_REPORT_REMAIN_OUT_TIME);
     array.add(ZENDURE_REPORT_REMAIN_IN_TIME);
-    serializeJson(root, _updatePayload);
+    serializeJson(root, _payloadUpdate);
+#endif
 
     return true;
 }
 
 void ZendureBattery::deinit()
 {
-    if (!_reportTopic.isEmpty()) {
-        MqttSettings.unsubscribe(_reportTopic);
-        _reportTopic.clear();
+    if (!_topicReport.isEmpty()) {
+        MqttSettings.unsubscribe(_topicReport);
+        _topicReport.clear();
     }
-    if (!_logTopic.isEmpty()) {
-        MqttSettings.unsubscribe(_logTopic);
-        _logTopic.clear();
+    if (!_topicLog.isEmpty()) {
+        MqttSettings.unsubscribe(_topicLog);
+        _topicLog.clear();
     }
-    if (!_readReplyTopic.isEmpty()){
-        MqttSettings.unsubscribe(_readReplyTopic);
-        _readReplyTopic.clear();
+#ifndef ZENDURE_NO_REDUCED_UPDATE
+    if (!_topicReadReply.isEmpty()){
+        MqttSettings.unsubscribe(_topicReadReply);
+        _topicReadReply.clear();
     }
+#endif
 }
 
 void ZendureBattery::loop()
 {
     auto ms = millis();
 
-    if (!_readTopic.isEmpty()) {
-        if (ms >= _nextFullUpdate) {
-            _nextFullUpdate = ms + _fullUpdateRateMs;
-            _nextPartitialUpdate = ms + _partitialUpdateRateMs;
-            MqttSettings.publishGeneric(_readTopic, "{\"properties\": [\"getAll\", \"firmwares\", \"modules\", \"logs\"] }", false, 0);
+    if (!_topicRead.isEmpty()) {
+        if (!_payloadFullUpdate.isEmpty() && ms >= _nextFullUpdate) {
+            _nextFullUpdate = ms + _rateFullUpdateMs;
+#ifndef ZENDURE_NO_REDUCED_UPDATE
+            _nextUpdate = ms + _rateUpdateMs;
+#endif
+            MqttSettings.publishGeneric(_topicRead, _payloadFullUpdate, false, 0);
         }
-        if (ms >= _nextPartitialUpdate) {
-            _nextPartitialUpdate = ms + _partitialUpdateRateMs;
-            MqttSettings.publishGeneric(_readTopic, _updatePayload, false, 0);
+#ifndef ZENDURE_NO_REDUCED_UPDATE
+        if (!_payloadUpdate.isEmpty() && ms >= _nextUpdate) {
+            _nextUpdate = ms + _rateUpdateMs;
+            MqttSettings.publishGeneric(_topicRead, _payloadUpdate, false, 0);
         }
+#endif
     }
 
     if (ms >= _nextTimesync) {
-        _nextTimesync = ms + _timesyncRateMs;
+        _nextTimesync = ms + _rateTimesyncMs;
         timesync();
 
         // republish settings - just to be sure
-        if (!_writeTopic.isEmpty()) {
-            if (!_settingsPayload.isEmpty()){
-                MqttSettings.publishGeneric(_writeTopic, _settingsPayload, false, 0);
-            }
+        if (!_topicWrite.isEmpty() && !_payloadSettings.isEmpty()){
+            MqttSettings.publishGeneric(_topicWrite, _payloadSettings, false, 0);
         }
     }
 }
-uint16_t ZendureBattery::updateOutputLimit(uint16_t limit)
+
+uint16_t ZendureBattery::setOutputLimit(uint16_t limit)
 {
-    if (_writeTopic.isEmpty()) {
+    if (_topicWrite.isEmpty()) {
         return _stats->_output_limit;
     }
 
@@ -193,7 +209,7 @@ uint16_t ZendureBattery::updateOutputLimit(uint16_t limit)
             uint16_t remain = (limit % 30U) / 15U;
             limit = 30 * base + 30 * remain;
         }
-        MqttSettings.publishGeneric(_writeTopic, "{\"properties\": {\"outputLimit\": " + String(limit) + "} }", false, 0);
+        MqttSettings.publishGeneric(_topicWrite, "{\"properties\": {\"" ZENDURE_REPORT_OUTPUT_LIMIT "\": " + String(limit) + "} }", false, 0);
     }
 
     return limit;
@@ -201,24 +217,26 @@ uint16_t ZendureBattery::updateOutputLimit(uint16_t limit)
 
 void ZendureBattery::timesync()
 {
-    if (!_timesyncTopic.isEmpty()) {
-        struct tm timeinfo;
-        if (getLocalTime(&timeinfo, 5)) {
-            char timeStringBuff[50];
-            strftime(timeStringBuff, sizeof(timeStringBuff), "%s", &timeinfo);
-            MqttSettings.publishGeneric(_timesyncTopic,"{\"zoneOffset\": \"+00:00\", \"messageId\": 123, \"timestamp\": " + String(timeStringBuff) + "}", false, 0);
-        }
+    struct tm timeinfo;
+    if (!_baseTopic.isEmpty() && getLocalTime(&timeinfo, 5)) {
+        char timeStringBuff[50];
+        strftime(timeStringBuff, sizeof(timeStringBuff), "%s", &timeinfo);
+        MqttSettings.publishGeneric("iot" + _baseTopic + "time-sync/reply","{\"zoneOffset\": \"+00:00\", \"messageId\": 123, \"timestamp\": " + String(timeStringBuff) + "}", false, 0);
     }
 }
 
+#ifndef ZENDURE_NO_REDUCED_UPDATE
 void ZendureBattery::onMqttMessageRead(espMqttClientTypes::MessageProperties const& properties,
         char const* topic, uint8_t const* payload, size_t len, size_t index, size_t total)
 {
 }
+#endif
 
 void ZendureBattery::onMqttMessageReport(espMqttClientTypes::MessageProperties const& properties,
         char const* topic, uint8_t const* payload, size_t len, size_t index, size_t total)
 {
+    auto ms = millis();
+
     std::string const src = std::string(reinterpret_cast<const char*>(payload), len);
     std::string logValue = src.substr(0, 64);
     if (src.length() > logValue.length()) { logValue += "..."; }
@@ -259,21 +277,16 @@ void ZendureBattery::onMqttMessageReport(espMqttClientTypes::MessageProperties c
         return log("Invalid or missing 'product' in '%s'", logValue.c_str());
     }*/
 
-    auto props = Utils::getJsonElement<JsonObjectConst>(obj, "properties", 1);
+    auto props = Utils::getJsonElement<JsonObjectConst>(obj, ZENDURE_REPORT_PROPERTIES, 1);
     if (props.has_value()){
         auto sw_version = Utils::getJsonElement<uint32_t>(*props, ZENDURE_REPORT_FW_VERSION);
         if (sw_version.has_value()){
-            _stats->setFwVersion(parseVersion(*sw_version));
+            _stats->setFwVersion(std::move(parseVersion(*sw_version)));
         }
 
-        auto hw_version = Utils::getJsonElement<uint32_t>(*props, "masterhaerVersion");
+        auto hw_version = Utils::getJsonElement<uint32_t>(*props, ZENDURE_REPORT_HW_VERSION);
         if (hw_version.has_value()){
-            _stats->setHwVersion(parseVersion(*hw_version));
-        } else {
-            hw_version = Utils::getJsonElement<uint32_t>(*props, "masterHaerVersion");
-            if (hw_version.has_value()){
-                _stats->setHwVersion(parseVersion(*hw_version));
-            }
+            _stats->setHwVersion(std::move(parseVersion(*hw_version)));
         }
 
         auto soc_max = Utils::getJsonElement<float>(*props, ZENDURE_REPORT_MAX_SOC);
@@ -317,7 +330,7 @@ void ZendureBattery::onMqttMessageReport(espMqttClientTypes::MessageProperties c
             _stats->_heat_state = static_cast<bool>(*heat_state);
         }
 
-        auto auto_shutdown = Utils::getJsonElement<uint8_t>(*props, ZENDURE_REPORT_HUB_STATE);
+        auto auto_shutdown = Utils::getJsonElement<uint8_t>(*props, ZENDURE_REPORT_AUTO_SHUTDOWN);
         if (auto_shutdown.has_value()){
             _stats->_auto_shutdown = static_cast<bool>(*auto_shutdown);
         }
@@ -337,10 +350,13 @@ void ZendureBattery::onMqttMessageReport(espMqttClientTypes::MessageProperties c
             _stats->_remain_in_time = *intime >= ZENDURE_REMAINING_TIME_OVERFLOW ? -1 : *intime;
         }
 
+        _stats->_lastUpdate = ms;
     }
 
+
+
     // stop processing here, if no pack data found in message
-    auto packData = Utils::getJsonElement<JsonArrayConst>(obj, "packData", 2);
+    auto packData = Utils::getJsonElement<JsonArrayConst>(obj, ZENDURE_REPORT_PACK_DATE, 2);
     if (!packData.has_value()){
         return;
     }
@@ -363,7 +379,7 @@ void ZendureBattery::onMqttMessageReport(espMqttClientTypes::MessageProperties c
     if (_stats->_packData.size() == _stats->_num_batteries){
         for (auto packDataJson : *packData){
             auto serial = Utils::getJsonElement<String>(packDataJson, ZENDURE_REPORT_SERIAL);
-            auto state = Utils::getJsonElement<uint8_t>(packDataJson, "state");
+            auto state = Utils::getJsonElement<uint8_t>(packDataJson, ZENDURE_REPORT_STATE);
             auto version = Utils::getJsonElement<uint32_t>(packDataJson, ZENDURE_REPORT_FW_VERSION);
 
             // do not waste processing time if nothing to do
@@ -380,8 +396,10 @@ void ZendureBattery::onMqttMessageReport(espMqttClientTypes::MessageProperties c
                     }
 
                     if (version.has_value()){
-                        (*pack)->_fwversion = parseVersion(*version);
+                        (*pack)->setFwVersion(std::move(parseVersion(*version)));
                     }
+
+                    (*pack)->_lastUpdate = ms;
 
                     // we found the pack we searched for, so terminate loop here
                     break;
@@ -477,12 +495,12 @@ void ZendureBattery::onMqttMessageLog(espMqttClientTypes::MessageProperties cons
                 (*pack)->_cell_voltage_max = static_cast<uint16_t>(cmax);
                 (*pack)->_cell_voltage_avg = static_cast<uint16_t>(cavg);
                 (*pack)->_cell_voltage_spread = static_cast<uint16_t>(cdel);
-                (*pack)->_cell_temperature_max = static_cast<float>(ctmp);
+                (*pack)->_cell_temperature_max = static_cast<int16_t>(ctmp);
                 (*pack)->_current = static_cast<float>(pcur) / 10.0;
                 (*pack)->_voltage_total = static_cast<float>(pvol) / 1000.0;
                 (*pack)->_soc_level = static_cast<float>(psoc) / 10.0;
                 (*pack)->_power = static_cast<int16_t>((*pack)->_current * (*pack)->_voltage_total);
-                (*pack)->_lastUpdateTimestamp = ms;
+                (*pack)->_lastUpdate = ms;
 
                 capacity += (*pack)->getCapacity();
                 cellAvg += cavg;
@@ -526,7 +544,7 @@ void ZendureBattery::onMqttMessageLog(espMqttClientTypes::MessageProperties cons
         _stats->_cellMaxMilliVolt = static_cast<uint16_t>(cellMax);
         _stats->_cellAvgMilliVolt = static_cast<uint16_t>(cellAvg) / num;
         _stats->_cellDeltaMilliVolt = static_cast<uint16_t>(cellDelta);
-        _stats->_cellTemperature = static_cast<float>(cellTemp);
+        _stats->_cellTemperature = static_cast<int16_t>(cellTemp);
 
         _stats->_lastUpdate = ms;
 
