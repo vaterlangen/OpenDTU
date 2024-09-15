@@ -274,12 +274,12 @@ void ZendureBattery::onMqttMessageReport(espMqttClientTypes::MessageProperties c
 
     auto props = Utils::getJsonElement<JsonObjectConst>(obj, ZENDURE_REPORT_PROPERTIES, 1);
     if (props.has_value()){
-        auto sw_version = Utils::getJsonElement<uint32_t>(*props, ZENDURE_REPORT_FW_VERSION);
+        auto sw_version = Utils::getJsonElement<uint32_t>(*props, ZENDURE_REPORT_MASTER_FW_VERSION);
         if (sw_version.has_value()){
             _stats->setFwVersion(std::move(parseVersion(*sw_version)));
         }
 
-        auto hw_version = Utils::getJsonElement<uint32_t>(*props, ZENDURE_REPORT_HW_VERSION);
+        auto hw_version = Utils::getJsonElement<uint32_t>(*props, ZENDURE_REPORT_MASTER_HW_VERSION);
         if (hw_version.has_value()){
             _stats->setHwVersion(std::move(parseVersion(*hw_version)));
         }
@@ -375,7 +375,7 @@ void ZendureBattery::onMqttMessageReport(espMqttClientTypes::MessageProperties c
         for (auto packDataJson : *packData){
             auto serial = Utils::getJsonElement<String>(packDataJson, ZENDURE_REPORT_SERIAL);
             auto state = Utils::getJsonElement<uint8_t>(packDataJson, ZENDURE_REPORT_STATE);
-            auto version = Utils::getJsonElement<uint32_t>(packDataJson, ZENDURE_REPORT_FW_VERSION);
+            auto version = Utils::getJsonElement<uint32_t>(packDataJson, ZENDURE_REPORT_PACK_FW_VERSION);
 
             // do not waste processing time if nothing to do
             if (!serial.has_value() || !(state.has_value() || version.has_value())){
