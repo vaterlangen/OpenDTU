@@ -301,6 +301,31 @@ std::list<ChannelNum_t> StatisticsParser::getChannelsByType(const ChannelType_t 
     return l;
 }
 
+std::list<MpptNum_t> StatisticsParser::getMppts() const
+{
+    std::list<MpptNum_t> l;
+    for (uint8_t i = 0; i < _byteAssignmentSize; i++) {
+        if (_byteAssignment[i].mppt != MPPT_NONE) {
+            l.push_back(_byteAssignment[i].mppt);
+        }
+    }
+    l.unique();
+    return l;
+}
+
+std::list<ChannelNum_t> StatisticsParser::getChannelsByMppt(const MpptNum_t mppt) const
+{
+    std::list<ChannelNum_t> l;
+    for (uint8_t i = 0; i < _byteAssignmentSize; i++) {
+        if (_byteAssignment[i].mppt == mppt) {
+            l.push_back(_byteAssignment[i].ch);
+        }
+    }
+    l.unique();
+    return l;
+}
+
+
 uint16_t StatisticsParser::getStringMaxPower(const uint8_t channel) const
 {
     return _stringMaxPower[channel];

@@ -131,6 +131,8 @@ void ConfigurationClass::serializePowerLimiterConfig(PowerLimiterConfig const& s
         t["lower_power_limit"] = s.LowerPowerLimit;
         t["upper_power_limit"] = s.UpperPowerLimit;
     }
+}
+
 void ConfigurationClass::serializeBatteryConfig(BatteryConfig const& source, JsonObject& target)
 {
     target["enabled"] = config.Battery.Enabled;
