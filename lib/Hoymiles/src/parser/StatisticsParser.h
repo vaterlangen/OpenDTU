@@ -76,6 +76,16 @@ enum ChannelNum_t {
     CH_CNT
 };
 
+// MPPT_NONE is sued for non string values
+enum MpptNum_t {
+    MPPT_A,
+    MPPT_B,
+    MPPT_C,
+    MPPT_D,
+    MPPT_CNT,
+    MPPT_NONE = 0xff,
+};
+
 enum ChannelType_t {
     TYPE_AC = 0,
     TYPE_DC,
@@ -86,6 +96,7 @@ const char* const channelsTypes[] = { "AC", "DC", "INV" };
 typedef struct {
     ChannelType_t type;
     ChannelNum_t ch; // channel 0 - 5
+    MpptNum_t mppt; // assigned MPPT
     FieldId_t fieldId; // field id
     UnitId_t unitId; // uint id
     uint8_t start; // pos of first byte in buffer
@@ -132,6 +143,9 @@ public:
     std::list<ChannelType_t> getChannelTypes() const;
     const char* getChannelTypeName(const ChannelType_t type) const;
     std::list<ChannelNum_t> getChannelsByType(const ChannelType_t type) const;
+
+    std::list<MpptNum_t> getMppts() const;
+    std::list<ChannelNum_t> getChannelsByMppt(const MpptNum_t mppt) const;
 
     uint16_t getStringMaxPower(const uint8_t channel) const;
     void setStringMaxPower(const uint8_t channel, const uint16_t power);
