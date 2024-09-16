@@ -329,6 +329,7 @@ export default defineComponent({
                 { key: 2, value: 'Mqtt' },
                 { key: 3, value: 'Victron' },
                 { key: 4, value: 'PytesCan' },
+                { key: 5, value: 'SBSCan' },
                 { key: 7, value: 'ZendureLocalMqtt' },
             ],
             jkBmsInterfaceTypeList: [
