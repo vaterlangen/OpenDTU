@@ -6,7 +6,7 @@
 #include "Configuration.h"
 #include "Display_Graphic.h"
 #include "PinMapping.h"
-#include "Utils.h"
+#include "RestartHelper.h"
 #include "WebApi.h"
 #include "WebApi_errors.h"
 #include "helper.h"
@@ -116,6 +116,13 @@ void WebApiDeviceClass::onDeviceAdminGet(AsyncWebServerRequest* request)
     huaweiPinObj["cs"] = pin.huawei_cs;
     huaweiPinObj["power"] = pin.huawei_power;
 
+    auto powermeterPinObj = curPin["powermeter"].to<JsonObject>();
+    powermeterPinObj["rx"] = pin.powermeter_rx;
+    powermeterPinObj["tx"] = pin.powermeter_tx;
+    powermeterPinObj["dere"] = pin.powermeter_dere;
+    powermeterPinObj["rxen"] = pin.powermeter_rxen;
+    powermeterPinObj["txen"] = pin.powermeter_txen;
+
     WebApi.sendJsonResponse(request, response, __FUNCTION__, __LINE__);
 }
 
@@ -133,8 +140,8 @@ void WebApiDeviceClass::onDeviceAdminPost(AsyncWebServerRequest* request)
 
     auto& retMsg = response->getRoot();
 
-    if (!(root.containsKey("curPin")
-            || root.containsKey("display"))) {
+    if (!(root["curPin"].is<JsonObject>()
+            || root["display"].is<JsonObject>())) {
         retMsg["message"] = "Values are missing!";
         retMsg["code"] = WebApiError::GenericValueMissing;
         WebApi.sendJsonResponse(request, response, __FUNCTION__, __LINE__);
@@ -179,6 +186,6 @@ void WebApiDeviceClass::onDeviceAdminPost(AsyncWebServerRequest* request)
     WebApi.sendJsonResponse(request, response, __FUNCTION__, __LINE__);
 
     if (performRestart) {
-        Utils::restartDtu();
+        RestartHelper.triggerRestart();
     }
 }
