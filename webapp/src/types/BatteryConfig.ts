@@ -17,11 +17,11 @@ export interface BatteryConfig {
     mqtt_amperage_unit: number;
     zendure_device_type: number;
     zendure_device_id: string;
-    zendure_polling_interval : number;
+    zendure_polling_interval: number;
     zendure_soc_min: number;
     zendure_soc_max: number;
     zendure_bypass_mode: number;
     zendure_max_output: number;
-    zendure_auto_shutdown : boolean;
-    zendure_force_limit : boolean;
+    zendure_auto_shutdown: boolean;
+    zendure_force_limit: boolean;
 }
