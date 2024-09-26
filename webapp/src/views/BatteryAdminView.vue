@@ -252,16 +252,17 @@
                         :tooltip="$t('batteryadmin.ZendureForceLimitDescription')"
                     />
 
-                    <InputElement
-                        v-if="batteryConfigList.zendure_force_limit"
-                        :label="$t('batteryadmin.ZendureOutputLimit')"
-                        v-model="batteryConfigList.zendure_output_limit"
-                        type="number"
-                        min="0"
-                        max="1200"
-                        step="1"
-                        :postfix="$t('batteryadmin.Watt')"
-                    />
+                    <template v-if="batteryConfigList.zendure_force_limit">
+                        <InputElement
+                            :label="$t('batteryadmin.ZendureOutputLimit')"
+                            v-model="batteryConfigList.zendure_output_limit"
+                            type="number"
+                            min="0"
+                            max="1200"
+                            step="1"
+                            :postfix="$t('batteryadmin.Watt')"
+                        />
+                    </template>
 
                     <InputElement
                         :label="$t('batteryadmin.ZendureMinSoc')"
