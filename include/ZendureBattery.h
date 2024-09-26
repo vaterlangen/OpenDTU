@@ -121,6 +121,7 @@ public:
 protected:
     void timesync();
     static String parseVersion(uint32_t version);
+    uint16_t calcOutputLimit(uint16_t limit);
 
 private:
     void calculateEfficiency();

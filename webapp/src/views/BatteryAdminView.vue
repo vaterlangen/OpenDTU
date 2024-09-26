@@ -253,6 +253,17 @@
                     />
 
                     <InputElement
+                        v-if="batteryConfigList.zendure_force_limit"
+                        :label="$t('batteryadmin.ZendureOutputLimit')"
+                        v-model="batteryConfigList.zendure_output_limit"
+                        type="number"
+                        min="0"
+                        max="1200"
+                        step="1"
+                        :postfix="$t('batteryadmin.Watt')"
+                    />
+
+                    <InputElement
                         :label="$t('batteryadmin.ZendureMinSoc')"
                         v-model="batteryConfigList.zendure_soc_min"
                         type="number"
@@ -363,6 +374,9 @@ export default defineComponent({
                 { key: 1, value: 'AlwaysOff' },
                 { key: 2, value: 'AlwaysOn' },
             ],
+            //zendureOutputLimitRule: [
+            //    value:number => (value >= 100 || value == 0 || value == 30 || value == 60 || value == 90) || 'Value must be 0,30,60,90 or >= 100'
+            //],
         };
     },
     created() {
