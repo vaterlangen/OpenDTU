@@ -238,13 +238,8 @@ template std::optional<float> Utils::getNumericValueFromMqttPayload(char const* 
 
 template<typename T>
 std::optional<T> Utils::getJsonElement(JsonObjectConst const root, char const* key, size_t nesting /* = 0*/) {
-    if (root.containsKey(key)){
-
-        auto item = root[key].as<JsonVariantConst>();
-
-        if (item.is<T>() && item.nesting() == nesting){
-            return item.as<T>();
-        }
+    if (!root[key].isNull() && root[key].is<T>() && root[key].nesting() == nesting){
+        return root[key].as<T>();
     }
     return std::nullopt;
 }
