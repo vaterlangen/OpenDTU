@@ -194,6 +194,7 @@ struct BATTERY_CONFIG_T {
     uint16_t ZendureMaxOutput;
     bool ZendureAutoShutdown;
     bool ZendureForceLimit;
+    uint16_t ZendureOutputLimit;
 };
 using BatteryConfig = struct BATTERY_CONFIG_T;
 
