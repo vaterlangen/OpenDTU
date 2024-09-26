@@ -101,6 +101,7 @@ void ConfigurationClass::serializeBatteryConfig(BatteryConfig const& source, Jso
     target["zendure_max_output"] = config.Battery.ZendureMaxOutput;
     target["zendure_auto_shutdown"] = config.Battery.ZendureAutoShutdown;
     target["zendure_force_limit"] = config.Battery.ZendureForceLimit;
+    target["zendure_output_limit"] = config.Battery.ZendureOutputLimit;
 }
 
 bool ConfigurationClass::write()
@@ -400,6 +401,7 @@ void ConfigurationClass::deserializeBatteryConfig(JsonObject const& source, Batt
     target.ZendureMaxOutput = source["zendure_max_output"] | BATTERY_ZENDURE_MAX_OUTPUT;
     target.ZendureAutoShutdown = source["zendure_auto_shutdown"] | BATTERY_ZENDURE_AUTO_SHUTDOWN;
     target.ZendureForceLimit = source["zendure_force_limit"] | BATTERY_ZENDURE_FORCE_LIMIT;
+    target.ZendureOutputLimit = source["zendure_output_limit"] | BATTERY_ZENDURE_OUTPUT_LIMIT;
 }
 
 bool ConfigurationClass::read()

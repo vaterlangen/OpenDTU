@@ -24,4 +24,5 @@ export interface BatteryConfig {
     zendure_max_output: number;
     zendure_auto_shutdown: boolean;
     zendure_force_limit: boolean;
+    zendure_output_limit: number;
 }

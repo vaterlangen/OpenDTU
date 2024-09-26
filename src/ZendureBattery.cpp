@@ -113,7 +113,7 @@ bool ZendureBattery::init(bool verboseLogging)
     prop[ZENDURE_REPORT_MAX_SOC] = config.Battery.ZendureMaxSoC * 10;
     prop[ZENDURE_REPORT_MIN_SOC] = config.Battery.ZendureMinSoC * 10;
     if (config.Battery.ZendureForceLimit){
-        prop[ZENDURE_REPORT_OUTPUT_LIMIT] = config.Battery.ZendureMaxOutput;
+        prop[ZENDURE_REPORT_OUTPUT_LIMIT] = calcOutputLimit(min(config.Battery.ZendureMaxOutput, config.Battery.ZendureOutputLimit));
     }
     prop[ZENDURE_REPORT_INVERSE_MAX_POWER] = config.Battery.ZendureMaxOutput;
     prop[ZENDURE_REPORT_SMART_MODE] = 0; // should be disabled
@@ -196,6 +196,17 @@ void ZendureBattery::loop()
     }
 }
 
+uint16_t ZendureBattery::calcOutputLimit(uint16_t limit)
+{
+    if (limit >= 100 || limit == 0){
+        return limit;
+    }
+
+    uint16_t base = limit / 30U;
+    uint16_t remain = (limit % 30U) / 15U;
+    return 30 * base + 30 * remain;
+}
+
 uint16_t ZendureBattery::setOutputLimit(uint16_t limit)
 {
     if (_topicWrite.isEmpty()) {
@@ -203,11 +214,7 @@ uint16_t ZendureBattery::setOutputLimit(uint16_t limit)
     }
 
     if (_stats->_output_limit != limit){
-        if (limit < 100 && limit != 0){
-            uint16_t base = limit / 30U;
-            uint16_t remain = (limit % 30U) / 15U;
-            limit = 30 * base + 30 * remain;
-        }
+        limit = calcOutputLimit(limit);
         MqttSettings.publishGeneric(_topicWrite, "{\"properties\": {\"" ZENDURE_REPORT_OUTPUT_LIMIT "\": " + String(limit) + "} }", false, 0);
     }
 
