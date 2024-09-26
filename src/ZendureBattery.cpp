@@ -556,6 +556,10 @@ void ZendureBattery::onMqttMessageLog(espMqttClientTypes::MessageProperties cons
 }
 
 String ZendureBattery::parseVersion(uint32_t version) {
+    if (!version){
+        return String();
+    }
+
     uint8_t major = (version >> 12) & 0xF;
     uint8_t minor = (version >> 8) & 0xF;
     uint8_t bugfix = version & 0xFF;
