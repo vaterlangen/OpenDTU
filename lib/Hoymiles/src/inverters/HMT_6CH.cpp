@@ -72,6 +72,12 @@ static const byteAssign_t byteAssignment[] = {
     { TYPE_INV, CH0, FLD_EFF, UNIT_PCT, CALC_TOTAL_EFF, 0, CMD_CALC, false, 3 }
 };
 
+static const mpptAssign_t mpptAssignment[] = {
+    { MPPT_A, {CH0, CH1} },
+    { MPPT_B, {CH2, CH3} },
+    { MPPT_C, {CH4, CH5} }
+};
+
 HMT_6CH::HMT_6CH(HoymilesRadio* radio, const uint64_t serial)
     : HMT_Abstract(radio, serial) {};
 
@@ -95,4 +101,14 @@ const byteAssign_t* HMT_6CH::getByteAssignment() const
 uint8_t HMT_6CH::getByteAssignmentSize() const
 {
     return sizeof(byteAssignment) / sizeof(byteAssignment[0]);
+}
+
+const mpptAssign_t* HMT_6CH::getMpptAssignment() const
+{
+    return mpptAssignment;
+}
+
+uint8_t HMT_6CH::getMpptAssignmentSize() const
+{
+    return sizeof(mpptAssignment) / sizeof(mpptAssignment[0]);
 }

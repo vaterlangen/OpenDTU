@@ -277,3 +277,27 @@ void InverterAbstract::resetRadioStats()
 {
     RadioStats = {};
 }
+
+uint8_t InverterAbstract::numMppts() const
+{
+    return getMpptAssignmentSize();
+}
+
+std::vector<MpptNum_t> InverterAbstract::getMppts() const
+{
+    std::vector<MpptNum_t> l;
+    for (uint8_t i = 0; i < getMpptAssignmentSize(); i++) {
+        l.push_back(getMpptAssignment()[i].mppt);
+    }
+    return l;
+}
+
+std::vector<ChannelNum_t> InverterAbstract::getChannelsByMppt(const MpptNum_t mppt) const
+{
+    for (uint8_t i = 0; i < getMpptAssignmentSize(); i++) {
+        if (getMpptAssignment()[i].mppt == mppt) {
+            return getMpptAssignment()[i].channels;
+        }
+    }
+    return std::vector<ChannelNum_t>();
+}

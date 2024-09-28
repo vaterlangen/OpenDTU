@@ -11,4 +11,6 @@ public:
     String typeName() const;
     const byteAssign_t* getByteAssignment() const;
     uint8_t getByteAssignmentSize() const;
+    const mpptAssign_t* getMpptAssignment() const;
+    uint8_t getMpptAssignmentSize() const;
 };
