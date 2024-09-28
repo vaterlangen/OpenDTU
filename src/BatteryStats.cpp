@@ -125,8 +125,10 @@ void PylontechBatteryStats::getLiveViewData(JsonVariant& root) const
     // values go into the "Status" card of the web application
     addLiveViewValue(root, "chargeVoltage", _chargeVoltage, "V", 1);
     addLiveViewValue(root, "chargeCurrentLimitation", _chargeCurrentLimitation, "A", 1);
+    addLiveViewValue(root, "dischargeVoltageLimitation", _dischargeVoltageLimitation, "V", 1);
     addLiveViewValue(root, "stateOfHealth", _stateOfHealth, "%", 0);
     addLiveViewValue(root, "temperature", _temperature, "°C", 1);
+    addLiveViewValue(root, "modules", _moduleCount, "", 0);
 
     addLiveViewTextValue(root, "chargeEnabled", (_chargeEnabled?"yes":"no"));
     addLiveViewTextValue(root, "dischargeEnabled", (_dischargeEnabled?"yes":"no"));
@@ -381,6 +383,7 @@ void PylontechBatteryStats::mqttPublish() const
 
     MqttSettings.publish("battery/settings/chargeVoltage", String(_chargeVoltage));
     MqttSettings.publish("battery/settings/chargeCurrentLimitation", String(_chargeCurrentLimitation));
+    MqttSettings.publish("battery/settings/dischargeVoltageLimitation", String(_dischargeVoltageLimitation));
     MqttSettings.publish("battery/stateOfHealth", String(_stateOfHealth));
     MqttSettings.publish("battery/temperature", String(_temperature));
     MqttSettings.publish("battery/alarm/overCurrentDischarge", String(_alarmOverCurrentDischarge));
@@ -400,6 +403,7 @@ void PylontechBatteryStats::mqttPublish() const
     MqttSettings.publish("battery/charging/chargeEnabled", String(_chargeEnabled));
     MqttSettings.publish("battery/charging/dischargeEnabled", String(_dischargeEnabled));
     MqttSettings.publish("battery/charging/chargeImmediately", String(_chargeImmediately));
+    MqttSettings.publish("battery/modulesTotal", String(_moduleCount));
 }
 
 void SBSBatteryStats::mqttPublish() const
