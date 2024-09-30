@@ -79,6 +79,18 @@ bool ZendureBattery::init(bool verboseLogging)
         MessageOutput.printf("ZendureBattery: Subscribed to '%s' for status readings\r\n", _topicReport.c_str());
     }
 
+    // subscribe for timesync messages
+    _topicTimesync = _baseTopic + "time-sync";
+    MqttSettings.subscribe(_topicReport, 0/*QoS*/,
+            std::bind(&ZendureBattery::onMqttMessageTimesync,
+                this, std::placeholders::_1, std::placeholders::_2,
+                std::placeholders::_3, std::placeholders::_4,
+                std::placeholders::_5, std::placeholders::_6)
+            );
+    if (_verboseLogging) {
+        MessageOutput.printf("ZendureBattery: Subscribed to '%s' for status readings\r\n", _topicReport.c_str());
+    }
+
 #ifndef ZENDURE_NO_REDUCED_UPDATE
     // subscribe for read messages
     _topicReadReply = _baseTopic + "properties/read/reply";
@@ -112,10 +124,6 @@ bool ZendureBattery::init(bool verboseLogging)
     prop[ZENDURE_REPORT_BYPASS_MODE] = config.Battery.ZendureBypassMode;
     prop[ZENDURE_REPORT_MAX_SOC] = config.Battery.ZendureMaxSoC * 10;
     prop[ZENDURE_REPORT_MIN_SOC] = config.Battery.ZendureMinSoC * 10;
-    if (config.Battery.ZendureForceLimit){
-        prop[ZENDURE_REPORT_OUTPUT_LIMIT] = calcOutputLimit(min(config.Battery.ZendureMaxOutput, config.Battery.ZendureOutputLimit));
-    }
-    prop[ZENDURE_REPORT_INVERSE_MAX_POWER] = config.Battery.ZendureMaxOutput;
     prop[ZENDURE_REPORT_SMART_MODE] = 0; // should be disabled
     serializeJson(root, _payloadSettings);
 
@@ -157,6 +165,10 @@ void ZendureBattery::deinit()
         MqttSettings.unsubscribe(_topicLog);
         _topicLog.clear();
     }
+    if (!_topicTimesync.isEmpty()) {
+        MqttSettings.unsubscribe(_topicTimesync);
+        _topicTimesync.clear();
+    }
 #ifndef ZENDURE_NO_REDUCED_UPDATE
     if (!_topicReadReply.isEmpty()){
         MqttSettings.unsubscribe(_topicReadReply);
@@ -189,6 +201,13 @@ void ZendureBattery::loop()
         _nextTimesync = ms + _rateTimesyncMs;
         timesync();
 
+        // update settings (will be skipped if unchanged)
+        auto const& config = Configuration.get();
+        setInverterMax(config.Battery.ZendureMaxOutput);
+        if (config.Battery.ZendureForceLimit){
+            setOutputLimit(min(config.Battery.ZendureMaxOutput, config.Battery.ZendureOutputLimit));
+        }
+
         // republish settings - just to be sure
         if (!_topicWrite.isEmpty() && !_payloadSettings.isEmpty()){
             MqttSettings.publishGeneric(_topicWrite, _payloadSettings, false, 0);
@@ -196,7 +215,7 @@ void ZendureBattery::loop()
     }
 }
 
-uint16_t ZendureBattery::calcOutputLimit(uint16_t limit)
+uint16_t ZendureBattery::calcOutputLimit(uint16_t limit) const
 {
     if (limit >= 100 || limit == 0){
         return limit;
@@ -207,7 +226,7 @@ uint16_t ZendureBattery::calcOutputLimit(uint16_t limit)
     return 30 * base + 30 * remain;
 }
 
-uint16_t ZendureBattery::setOutputLimit(uint16_t limit)
+uint16_t ZendureBattery::setOutputLimit(uint16_t limit) const
 {
     if (_topicWrite.isEmpty()) {
         return _stats->_output_limit;
@@ -221,7 +240,28 @@ uint16_t ZendureBattery::setOutputLimit(uint16_t limit)
     return limit;
 }
 
-void ZendureBattery::timesync()
+uint16_t ZendureBattery::setInverterMax(uint16_t limit) const
+{
+    if (_topicWrite.isEmpty()) {
+        return _stats->_inverse_max;
+    }
+
+    if (_stats->_inverse_max != limit){
+        limit = calcOutputLimit(limit);
+        MqttSettings.publishGeneric(_topicWrite, "{\"properties\": {\"" ZENDURE_REPORT_INVERSE_MAX_POWER "\": " + String(limit) + "} }", false, 0);
+    }
+
+    return limit;
+}
+
+void ZendureBattery::shutdown() const
+{
+    if (!_topicWrite.isEmpty()) {
+        MqttSettings.publishGeneric(_topicWrite, "{\"properties\": {\"" ZENDURE_REPORT_MASTER_SWITCH "\": 1} }", false, 0);
+    }
+}
+
+void ZendureBattery::timesync() const
 {
     struct tm timeinfo;
     if (!_baseTopic.isEmpty() && getLocalTime(&timeinfo, 5)) {
@@ -237,6 +277,12 @@ void ZendureBattery::onMqttMessageRead(espMqttClientTypes::MessageProperties con
 {
 }
 #endif
+
+void ZendureBattery::onMqttMessageTimesync(espMqttClientTypes::MessageProperties const& properties,
+        char const* topic, uint8_t const* payload, size_t len, size_t index, size_t total)
+{
+    timesync();
+}
 
 void ZendureBattery::onMqttMessageReport(espMqttClientTypes::MessageProperties const& properties,
         char const* topic, uint8_t const* payload, size_t len, size_t index, size_t total)
@@ -555,11 +601,8 @@ void ZendureBattery::onMqttMessageLog(espMqttClientTypes::MessageProperties cons
     }
 }
 
-String ZendureBattery::parseVersion(uint32_t version) {
-    if (!version){
-        return String();
-    }
-
+String ZendureBattery::parseVersion(uint32_t version)
+{
     uint8_t major = (version >> 12) & 0xF;
     uint8_t minor = (version >> 8) & 0xF;
     uint8_t bugfix = version & 0xFF;
@@ -569,7 +612,8 @@ String ZendureBattery::parseVersion(uint32_t version) {
     return String(buffer);
 }
 
-void ZendureBattery::calculateEfficiency() {
+void ZendureBattery::calculateEfficiency()
+{
     float in = static_cast<float>(_stats->_input_power);
     float out = static_cast<float>(_stats->_output_power);
     float efficiency = 0.0;
