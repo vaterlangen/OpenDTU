@@ -240,7 +240,7 @@
                         v-model="batteryConfigList.zendure_max_output"
                         type="number"
                         min="100"
-                        max="2000"
+                        max="1200"
                         step="100"
                         :postfix="$t('batteryadmin.Watt')"
                     />

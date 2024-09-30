@@ -103,6 +103,7 @@
 #define ZENDURE_REPORT_PV_BRAND                     "pvBrand"
 #define ZENDURE_REPORT_SMART_MODE                   "smartMode"
 #define ZENDURE_REPORT_PV_AUTO_MODEL                "autoModel"
+#define ZENDURE_REPORT_MASTER_SWITCH                "masterSwitch"
 
 
 #define ZENDURE_NO_REDUCED_UPDATE
@@ -116,12 +117,14 @@ public:
     void loop() final;
     std::shared_ptr<BatteryStats> getStats() const final { return _stats; }
 
-    uint16_t setOutputLimit(uint16_t limit);
+    uint16_t setOutputLimit(uint16_t limit) const;
+    uint16_t setInverterMax(uint16_t limit) const;
+    void shutdown() const;
 
 protected:
-    void timesync();
+    void timesync() const;
     static String parseVersion(uint32_t version);
-    uint16_t calcOutputLimit(uint16_t limit);
+    uint16_t calcOutputLimit(uint16_t limit) const;
 
 private:
     void calculateEfficiency();
@@ -162,6 +165,9 @@ private:
             char const* topic, uint8_t const* payload, size_t len, size_t index, size_t total);
 
     void onMqttMessageLog(espMqttClientTypes::MessageProperties const& properties,
+            char const* topic, uint8_t const* payload, size_t len, size_t index, size_t total);
+
+    void onMqttMessageTimesync(espMqttClientTypes::MessageProperties const& properties,
             char const* topic, uint8_t const* payload, size_t len, size_t index, size_t total);
 
 #ifndef ZENDURE_NO_REDUCED_UPDATE
