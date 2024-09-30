@@ -5,6 +5,7 @@
 #include "NetworkSettings.h"
 #include "Configuration.h"
 #include "MessageOutput.h"
+#include "SyslogLogger.h"
 #include "PinMapping.h"
 #include "Utils.h"
 #include "SPIPortManager.h"
@@ -53,6 +54,8 @@ void NetworkSettingsClass::init(Scheduler& scheduler)
 
     scheduler.addTask(_loopTask);
     _loopTask.enable();
+
+    Syslog.init(scheduler);
 }
 
 void NetworkSettingsClass::NetworkEvent(const WiFiEvent_t event, WiFiEventInfo_t info)
@@ -129,8 +132,7 @@ bool NetworkSettingsClass::onEvent(NetworkEventCb cbEvent, const network_event e
 
 void NetworkSettingsClass::raiseEvent(const network_event event)
 {
-    for (uint32_t i = 0; i < _cbEventList.size(); i++) {
-        const NetworkEventCbList_t entry = _cbEventList[i];
+    for (auto& entry : _cbEventList) {
         if (entry.cb) {
             if (entry.event == event || entry.event == network_event::NETWORK_EVENT_MAX) {
                 entry.cb(event);
@@ -294,6 +296,8 @@ void NetworkSettingsClass::applyConfig()
     }
     MessageOutput.println("done");
     setStaticIp();
+
+    Syslog.updateSettings(getHostname());
 }
 
 void NetworkSettingsClass::setHostname()
