@@ -6,7 +6,7 @@ body:
     attributes:
       value: |
         ### ⚠️ Please remember: issues are for *bugs*⚠️
-        That is, something you believe affects every single user of OpenDTU, not just you. If you're not sure, start with one of the other options below.
+        That is, something you believe affects every single user of OpenDTU-OnBattery, not just you. If you're not sure, start with one of the other options below.
   - type: markdown
     attributes:
       value: |
@@ -45,27 +45,35 @@ body:
     id: install_format
     attributes:
       label: Install Method
-      description: How did you install OpenDTU?
+      description: How did you install OpenDTU-OnBattery?
       options:
         - Pre-Compiled binary from GitHub releases
-        - Pre-Compiles binary from GitHub actions/pull-request
+        - Pre-Compiled binary from GitHub actions/pull-request
         - Self-Compiled
     validations:
       required: true
   - type: input
     id: version
     attributes:
-      label: What git-hash/version of OpenDTU?
-      description: You can find this in by going to Info -> System
+      label: What git-hash/version of OpenDTU-OnBattery?
+      description: You can find this in the Web UI at Info -> System.
       placeholder: "e.g. 359d513"
     validations:
       required: true
-  - type: input
+  - type: dropdown
     id: environment
     attributes:
-      label: What firmware variant (PIO Environment) are you using?
-      description: You can find this in by going to Info -> System
-      placeholder: "generic_esp32s3_usb"
+      label: What firmware variant (PIO Environment)?
+      description: You can find this in the Web UI at Info -> System.
+      options:
+          - "generic_esp32s3_usb"
+          - "generic_esp32s3"
+          - "generic_esp32_8mb"
+          - "generic_esp32_4mb_no_ota"
+          - "generic_esp32"
+          - "generic"
+          - "opendtufusionv2"
+          - "other (tell us in 'Anything else?')"
     validations:
       required: true
   - type: textarea
