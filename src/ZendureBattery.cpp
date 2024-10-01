@@ -122,7 +122,7 @@ bool ZendureBattery::init(bool verboseLogging)
     prop[ZENDURE_REPORT_PV_BRAND] = 1; // means Hoymiles
     prop[ZENDURE_REPORT_PV_AUTO_MODEL] = 0; // we did static setup
     prop[ZENDURE_REPORT_AUTO_RECOVER] = static_cast<uint8_t>(config.Battery.ZendureBypassMode == static_cast<uint8_t>(ZendureBatteryStats::BypassMode::Automatic));
-    prop[ZENDURE_REPORT_AUTO_SHUTDOWN] = config.Battery.ZendureAutoShutdown;
+    prop[ZENDURE_REPORT_AUTO_SHUTDOWN] = static_cast<uint8_t>(config.Battery.ZendureAutoShutdown);
     prop[ZENDURE_REPORT_BUZZER_SWITCH] = 0; // disable, as it is anoying
     prop[ZENDURE_REPORT_BYPASS_MODE] = config.Battery.ZendureBypassMode;
     prop[ZENDURE_REPORT_MAX_SOC] = config.Battery.ZendureMaxSoC * 10;
