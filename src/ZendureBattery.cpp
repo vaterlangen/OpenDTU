@@ -3,6 +3,7 @@
 #include "Configuration.h"
 #include "ZendureBattery.h"
 #include "MqttSettings.h"
+#include "SunPosition.h"
 #include "MessageOutput.h"
 #include "Utils.h"
 
@@ -180,6 +181,13 @@ void ZendureBattery::deinit()
 void ZendureBattery::loop()
 {
     auto ms = millis();
+    auto const& config = Configuration.get();
+    const bool isDayPeriod = SunPosition.isDayPeriod();
+
+    // if auto shutdown is enabled and battery switches to idle at night, turn off status requests to prevent keeping battery awake
+    if (config.Battery.ZendureAutoShutdown && !isDayPeriod && _stats->_state == ZendureBatteryStats::State::Idle){
+        return;
+    }
 
     if (!_topicRead.isEmpty()) {
         if (!_payloadFullUpdate.isEmpty() && ms >= _nextFullUpdate) {
@@ -202,7 +210,6 @@ void ZendureBattery::loop()
         timesync();
 
         // update settings (will be skipped if unchanged)
-        auto const& config = Configuration.get();
         setInverterMax(config.Battery.ZendureMaxOutput);
         if (config.Battery.ZendureForceLimit){
             setOutputLimit(min(config.Battery.ZendureMaxOutput, config.Battery.ZendureOutputLimit));
