@@ -170,6 +170,8 @@ enum BatteryVoltageUnit { Volts = 0, DeciVolts = 1, CentiVolts = 2, MilliVolts =
 
 enum BatteryAmperageUnit { Amps = 0, MilliAmps = 1 };
 
+enum ZendureBatteryOutputControl { ControlNone = 0, ControlFixed = 1, ControlSchedule = 2 };
+
 struct BATTERY_CONFIG_T {
     bool Enabled;
     bool VerboseLogging;
@@ -195,8 +197,12 @@ struct BATTERY_CONFIG_T {
     uint8_t ZendureBypassMode;
     uint16_t ZendureMaxOutput;
     bool ZendureAutoShutdown;
-    bool ZendureForceLimit;
     uint16_t ZendureOutputLimit;
+    ZendureBatteryOutputControl ZendureOutputControl;
+    int16_t ZendureSunriseOffset;
+    int16_t ZendureSunsetOffset;
+    uint16_t ZendureOutputLimitDay;
+    uint16_t ZendureOutputLimitNight;
 };
 using BatteryConfig = struct BATTERY_CONFIG_T;
 

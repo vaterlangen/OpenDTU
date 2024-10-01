@@ -105,7 +105,7 @@
 #define ZENDURE_REPORT_PV_AUTO_MODEL                "autoModel"
 #define ZENDURE_REPORT_MASTER_SWITCH                "masterSwitch"
 
-
+#define ZENDURE_ALIVE_MS                            (5 * 60 * 1000)
 #define ZENDURE_NO_REDUCED_UPDATE
 
 class ZendureBattery : public BatteryProvider {
@@ -141,6 +141,9 @@ private:
 
     uint32_t _rateTimesyncMs;
     uint64_t _nextTimesync;
+
+    uint32_t _rateSunCalcMs;
+    uint64_t _nextSunCalc;
 
     String _deviceId;
 

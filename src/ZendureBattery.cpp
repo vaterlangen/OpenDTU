@@ -89,7 +89,7 @@ bool ZendureBattery::init(bool verboseLogging)
                 std::placeholders::_5, std::placeholders::_6)
             );
     if (_verboseLogging) {
-        MessageOutput.printf("ZendureBattery: Subscribed to '%s' for status readings\r\n", _topicReport.c_str());
+        MessageOutput.printf("ZendureBattery: Subscribed to '%s' for timesync requests\r\n", _topicTimesync.c_str());
     }
 
 #ifndef ZENDURE_NO_REDUCED_UPDATE
@@ -113,6 +113,8 @@ bool ZendureBattery::init(bool verboseLogging)
     _nextFullUpdate     = 0;
     _rateTimesyncMs     = 3600 * 1000;
     _nextTimesync       = 0;
+    _rateSunCalcMs      = 60 * 1000;
+    _nextSunCalc        = 0;
 
     // pre-generate the settings request
     JsonDocument root;
@@ -182,11 +184,40 @@ void ZendureBattery::loop()
 {
     auto ms = millis();
     auto const& config = Configuration.get();
-    const bool isDayPeriod = SunPosition.isDayPeriod();
+    const bool isDayPeriod = SunPosition.isSunsetAvailable() ? SunPosition.isDayPeriod() : true;
 
     // if auto shutdown is enabled and battery switches to idle at night, turn off status requests to prevent keeping battery awake
     if (config.Battery.ZendureAutoShutdown && !isDayPeriod && _stats->_state == ZendureBatteryStats::State::Idle){
         return;
+    }
+
+    // check if we run in schedule mode
+    if (config.Battery.ZendureOutputControl == ZendureBatteryOutputControl::ControlSchedule && ms >= _nextSunCalc){
+        _nextSunCalc = ms + _rateSunCalcMs;
+        struct tm timeinfo_local;
+        struct tm timeinfo_sun;
+        if (getLocalTime(&timeinfo_local, 5)){
+            std::time_t current = std::mktime(&timeinfo_local);
+
+            std::time_t sunrise = 0;
+            std::time_t sunset = 0;
+
+            if (SunPosition.sunriseTime(&timeinfo_sun)) {
+                sunrise = std::mktime(&timeinfo_sun) + config.Battery.ZendureSunriseOffset * 60;
+            }
+
+            if (SunPosition.sunsetTime(&timeinfo_sun)) {
+                sunset = std::mktime(&timeinfo_sun) + config.Battery.ZendureSunsetOffset * 60;
+            }
+
+            if (sunrise && sunset) {
+                if (current >= sunrise && current < sunset){
+                    setOutputLimit(min(config.Battery.ZendureMaxOutput, config.Battery.ZendureOutputLimitDay));
+                } else if (current >= sunset || current < sunrise){
+                    setOutputLimit(min(config.Battery.ZendureMaxOutput, config.Battery.ZendureOutputLimitNight));
+                }
+            }
+        }
     }
 
     if (!_topicRead.isEmpty()) {
@@ -211,7 +242,7 @@ void ZendureBattery::loop()
 
         // update settings (will be skipped if unchanged)
         setInverterMax(config.Battery.ZendureMaxOutput);
-        if (config.Battery.ZendureForceLimit){
+        if (config.Battery.ZendureOutputControl == ZendureBatteryOutputControl::ControlFixed){
             setOutputLimit(min(config.Battery.ZendureMaxOutput, config.Battery.ZendureOutputLimit));
         }
 
@@ -235,13 +266,14 @@ uint16_t ZendureBattery::calcOutputLimit(uint16_t limit) const
 
 uint16_t ZendureBattery::setOutputLimit(uint16_t limit) const
 {
-    if (_topicWrite.isEmpty()) {
+    if (_topicWrite.isEmpty() || !_stats->updateAvailable(ZENDURE_ALIVE_MS)) {
         return _stats->_output_limit;
     }
 
     if (_stats->_output_limit != limit){
         limit = calcOutputLimit(limit);
         MqttSettings.publishGeneric(_topicWrite, "{\"properties\": {\"" ZENDURE_REPORT_OUTPUT_LIMIT "\": " + String(limit) + "} }", false, 0);
+        MessageOutput.printf("ZendureBattery: Adjusting outputlimit from %d W to %d W\r\n", _stats->_output_limit, limit);
     }
 
     return limit;
@@ -249,13 +281,14 @@ uint16_t ZendureBattery::setOutputLimit(uint16_t limit) const
 
 uint16_t ZendureBattery::setInverterMax(uint16_t limit) const
 {
-    if (_topicWrite.isEmpty()) {
+    if (_topicWrite.isEmpty() || !_stats->updateAvailable(ZENDURE_ALIVE_MS)) {
         return _stats->_inverse_max;
     }
 
     if (_stats->_inverse_max != limit){
         limit = calcOutputLimit(limit);
         MqttSettings.publishGeneric(_topicWrite, "{\"properties\": {\"" ZENDURE_REPORT_INVERSE_MAX_POWER "\": " + String(limit) + "} }", false, 0);
+        MessageOutput.printf("ZendureBattery: Adjusting inverter max output from %d W to %d W\r\n", _stats->_inverse_max, limit);
     }
 
     return limit;
@@ -265,6 +298,7 @@ void ZendureBattery::shutdown() const
 {
     if (!_topicWrite.isEmpty()) {
         MqttSettings.publishGeneric(_topicWrite, "{\"properties\": {\"" ZENDURE_REPORT_MASTER_SWITCH "\": 1} }", false, 0);
+        MessageOutput.printf("ZendureBattery: Shutting down HUB\r\n");
     }
 }
 
@@ -275,6 +309,7 @@ void ZendureBattery::timesync() const
         char timeStringBuff[50];
         strftime(timeStringBuff, sizeof(timeStringBuff), "%s", &timeinfo);
         MqttSettings.publishGeneric("iot" + _baseTopic + "time-sync/reply","{\"zoneOffset\": \"+00:00\", \"messageId\": 123, \"timestamp\": " + String(timeStringBuff) + "}", false, 0);
+        MessageOutput.printf("ZendureBattery: Timesync Reply\r\n");
     }
 }
 

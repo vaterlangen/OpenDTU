@@ -724,7 +724,14 @@
         "ZendureForceLimitDescription": "Ausgangsleistung fest vorgeben. ACHTUNG: Damit ist keine dynamisch Steuerung mehr möglich!",
         "ZendureOutputLimit": "Ausgangsleistung",
         "Percent": "%",
-        "Watt": "W"
+        "Watt": "W",
+        "Minutes": "@:networkadmin.Minutes",
+        "Mode": "@:ntpinfo.Mode",
+        "ZendureOutputControl": "Ausgabesteuerung",
+        "ZendureSunriseOffset": "Offset @:ntpinfo.Sunrise",
+        "ZendureSunsetOffset": "Offset @:ntpinfo.Sunset",
+        "ZendureOutputLimitDay": "@:batteryadmin.ZendureOutputLimit (@:ntpinfo.Day)",
+        "ZendureOutputLimitNight": "@:batteryadmin.ZendureOutputLimit (@:ntpinfo.Night)"
     },
     "inverteradmin": {
         "InverterSettings": "Wechselrichter Einstellungen",
