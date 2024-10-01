@@ -99,7 +99,9 @@ bool ZendureBattery::init(bool verboseLogging)
                 std::placeholders::_3, std::placeholders::_4,
                 std::placeholders::_5, std::placeholders::_6)
             );
-    log("Subscribed to '%s' for timesync requests", _topicTimesync.c_str());
+    if (_verboseLogging) {
+        MessageOutput.printf("ZendureBattery: Subscribed to '%s' for status readings\r\n", _topicReport.c_str());
+    }
 
 #ifndef ZENDURE_NO_REDUCED_UPDATE
     // subscribe for read messages
@@ -120,8 +122,6 @@ bool ZendureBattery::init(bool verboseLogging)
     _nextFullUpdate     = 0;
     _rateTimesyncMs     = ZENDURE_SECONDS_TIMESYNC * 1000;
     _nextTimesync       = 0;
-    _rateSunCalcMs      = ZENDURE_SECONDS_SUNPOSITION * 1000;
-    _nextSunCalc        = millis() + _rateSunCalcMs / 2;
 
     // pre-generate the settings request
     JsonDocument root;

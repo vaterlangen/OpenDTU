@@ -197,6 +197,7 @@ struct BATTERY_CONFIG_T {
     uint8_t ZendureBypassMode;
     uint16_t ZendureMaxOutput;
     bool ZendureAutoShutdown;
+    bool ZendureForceLimit;
     uint16_t ZendureOutputLimit;
     ZendureBatteryOutputControl ZendureOutputControl;
     int16_t ZendureSunriseOffset;
