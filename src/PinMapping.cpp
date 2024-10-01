@@ -84,6 +84,54 @@
 #define CMT_SDIO -1
 #endif
 
+#ifndef W5500_MOSI
+#define W5500_MOSI -1
+#endif
+
+#ifndef W5500_MISO
+#define W5500_MISO -1
+#endif
+
+#ifndef W5500_SCLK
+#define W5500_SCLK -1
+#endif
+
+#ifndef W5500_CS
+#define W5500_CS -1
+#endif
+
+#ifndef W5500_INT
+#define W5500_INT -1
+#endif
+
+#ifndef W5500_RST
+#define W5500_RST -1
+#endif
+
+#ifndef ETH_PHY_ADDR
+#define ETH_PHY_ADDR -1
+#endif
+
+#ifndef ETH_PHY_POWER
+#define ETH_PHY_POWER -1
+#endif
+
+#ifndef ETH_PHY_MDC
+#define ETH_PHY_MDC -1
+#endif
+
+#ifndef ETH_PHY_MDIO
+#define ETH_PHY_MDIO -1
+#endif
+
+#ifndef ETH_PHY_TYPE
+#define ETH_PHY_TYPE ETH_PHY_LAN8720
+#endif
+
+#ifndef ETH_CLK_MODE
+#define ETH_CLK_MODE ETH_CLOCK_GPIO0_IN
+#endif
+
 #ifndef VICTRON_PIN_TX
 #define VICTRON_PIN_TX -1
 #endif
@@ -178,30 +226,6 @@
 #define POWERMETER_PIN_RXEN -1
 #endif
 
-#ifndef W5500_SCLK
-#define W5500_SCLK -1
-#endif
-
-#ifndef W5500_MOSI
-#define W5500_MOSI -1
-#endif
-
-#ifndef W5500_MISO
-#define W5500_MISO -1
-#endif
-
-#ifndef W5500_CS
-#define W5500_CS -1
-#endif
-
-#ifndef W5500_INT
-#define W5500_INT -1
-#endif
-
-#ifndef W5500_RST
-#define W5500_RST -1
-#endif
-
 PinMappingClass PinMapping;
 
 PinMappingClass::PinMappingClass()
@@ -221,9 +245,9 @@ PinMappingClass::PinMappingClass()
     _pinMapping.cmt_gpio3 = CMT_GPIO3;
     _pinMapping.cmt_sdio = CMT_SDIO;
 
-    _pinMapping.w5500_sclk = W5500_SCLK;
     _pinMapping.w5500_mosi = W5500_MOSI;
     _pinMapping.w5500_miso = W5500_MISO;
+    _pinMapping.w5500_sclk = W5500_SCLK;
     _pinMapping.w5500_cs = W5500_CS;
     _pinMapping.w5500_int = W5500_INT;
     _pinMapping.w5500_rst = W5500_RST;
@@ -317,9 +341,9 @@ bool PinMappingClass::init(const String& deviceMapping)
             _pinMapping.cmt_gpio3 = doc[i]["cmt"]["gpio3"] | CMT_GPIO3;
             _pinMapping.cmt_sdio = doc[i]["cmt"]["sdio"] | CMT_SDIO;
 
-            _pinMapping.w5500_sclk = doc[i]["w5500"]["sclk"] | W5500_SCLK;
             _pinMapping.w5500_mosi = doc[i]["w5500"]["mosi"] | W5500_MOSI;
             _pinMapping.w5500_miso = doc[i]["w5500"]["miso"] | W5500_MISO;
+            _pinMapping.w5500_sclk = doc[i]["w5500"]["sclk"] | W5500_SCLK;
             _pinMapping.w5500_cs = doc[i]["w5500"]["cs"] | W5500_CS;
             _pinMapping.w5500_int = doc[i]["w5500"]["int"] | W5500_INT;
             _pinMapping.w5500_rst = doc[i]["w5500"]["rst"] | W5500_RST;
@@ -399,9 +423,9 @@ bool PinMappingClass::isValidCmt2300Config() const
 
 bool PinMappingClass::isValidW5500Config() const
 {
-    return _pinMapping.w5500_sclk >= 0
-        && _pinMapping.w5500_mosi >= 0
+    return _pinMapping.w5500_mosi >= 0
         && _pinMapping.w5500_miso >= 0
+        && _pinMapping.w5500_sclk >= 0
         && _pinMapping.w5500_cs >= 0
         && _pinMapping.w5500_int >= 0
         && _pinMapping.w5500_rst >= 0;
@@ -409,7 +433,9 @@ bool PinMappingClass::isValidW5500Config() const
 
 bool PinMappingClass::isValidEthConfig() const
 {
-    return _pinMapping.eth_enabled;
+    return _pinMapping.eth_enabled
+        && _pinMapping.eth_mdc >= 0
+        && _pinMapping.eth_mdio >= 0;
 }
 
 bool PinMappingClass::isValidHuaweiConfig() const

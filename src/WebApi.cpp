@@ -47,6 +47,15 @@ void WebApiClass::init(Scheduler& scheduler)
     _server.begin();
 }
 
+void WebApiClass::reload()
+{
+    _webApiWsConsole.reload();
+    _webApiWsLive.reload();
+    _webApiWsBatteryLive.reload();
+    _webApiWsVedirectLive.reload();
+    _webApiWsHuaweiLive.reload();
+}
+
 bool WebApiClass::checkCredentials(AsyncWebServerRequest* request)
 {
     CONFIG_T& config = Configuration.get();

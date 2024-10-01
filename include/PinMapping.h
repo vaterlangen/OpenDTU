@@ -26,9 +26,9 @@ struct PinMapping_t {
     int8_t cmt_gpio3;
     int8_t cmt_sdio;
 
-    int8_t w5500_sclk;
     int8_t w5500_mosi;
     int8_t w5500_miso;
+    int8_t w5500_sclk;
     int8_t w5500_cs;
     int8_t w5500_int;
     int8_t w5500_rst;
