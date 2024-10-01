@@ -727,7 +727,14 @@
         "ZendureForceLimitDescription": "Use fixed output power. WARNING: This prevents dynamic control!",
         "ZendureOutputLimit": "Output power",
         "Percent": "%",
-        "Watt": "W"
+        "Watt": "W",
+        "Minutes": "Minutes",
+        "Mode": "@:ntpinfo.Mode",
+        "ZendureOutputControl": "Output Control",
+        "ZendureSunriseOffset": "@:ntpinfo.Sunrise offset",
+        "ZendureSunsetOffset": "@:ntpinfo.Sunset offset",
+        "ZendureOutputLimitDay": "@:batteryadmin.ZendureOutputLimit (@:ntpinfo.Day)",
+        "ZendureOutputLimitNight": "@:batteryadmin.ZendureOutputLimit (@:ntpinfo.Night)"
     },
     "inverteradmin": {
         "InverterSettings": "Inverter Settings",

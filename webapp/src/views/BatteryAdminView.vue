@@ -246,25 +246,6 @@
                     />
 
                     <InputElement
-                        :label="$t('batteryadmin.ZendureForceLimit')"
-                        v-model="batteryConfigList.zendure_force_limit"
-                        type="checkbox"
-                        :tooltip="$t('batteryadmin.ZendureForceLimitDescription')"
-                    />
-
-                    <template v-if="batteryConfigList.zendure_force_limit">
-                        <InputElement
-                            :label="$t('batteryadmin.ZendureOutputLimit')"
-                            v-model="batteryConfigList.zendure_output_limit"
-                            type="number"
-                            min="0"
-                            max="1200"
-                            step="1"
-                            :postfix="$t('batteryadmin.Watt')"
-                        />
-                    </template>
-
-                    <InputElement
                         :label="$t('batteryadmin.ZendureMinSoc')"
                         v-model="batteryConfigList.zendure_soc_min"
                         type="number"
@@ -307,6 +288,76 @@
                         type="checkbox"
                         :tooltip="$t('batteryadmin.ZendureAutoShutdownDescription')"
                     />
+                </CardElement>
+
+                <CardElement :text="$t('batteryadmin.ZendureOutputControl')" textVariant="text-bg-primary" addSpace>
+                    <div class="row mb-3">
+                        <label for="zendure_output_mode" class="col-sm-2 col-form-label">
+                            {{ $t('batteryadmin.Mode') }}
+                        </label>
+                        <div class="col-sm-10">
+                            <select
+                                id="zendure_output_mode"
+                                class="form-select"
+                                v-model="batteryConfigList.zendure_output_control"
+                            >
+                                <option v-for="u in zendureOutputControlList" :key="u.key" :value="u.key">
+                                    {{ u.value }}
+                                </option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <template v-if="batteryConfigList.zendure_output_control == 1">
+                        <InputElement
+                            :label="$t('batteryadmin.ZendureOutputLimit')"
+                            v-model="batteryConfigList.zendure_output_limit"
+                            type="number"
+                            min="0"
+                            max="1200"
+                            step="1"
+                            :postfix="$t('batteryadmin.Watt')"
+                        />
+                    </template>
+
+                    <template v-if="batteryConfigList.zendure_output_control == 2">
+                        <InputElement
+                            :label="$t('batteryadmin.ZendureSunriseOffset')"
+                            v-model="batteryConfigList.zendure_sunrise_offset"
+                            type="number"
+                            min="-360"
+                            max="360"
+                            step="1"
+                            :postfix="$t('batteryadmin.Minutes')"
+                        />
+                        <InputElement
+                            :label="$t('batteryadmin.ZendureOutputLimitDay')"
+                            v-model="batteryConfigList.zendure_output_limit_day"
+                            type="number"
+                            min="0"
+                            max="1200"
+                            step="1"
+                            :postfix="$t('batteryadmin.Watt')"
+                        />
+                        <InputElement
+                            :label="$t('batteryadmin.ZendureSunsetOffset')"
+                            v-model="batteryConfigList.zendure_sunset_offset"
+                            type="number"
+                            min="-360"
+                            max="360"
+                            step="1"
+                            :postfix="$t('batteryadmin.Minutes')"
+                        />
+                        <InputElement
+                            :label="$t('batteryadmin.ZendureOutputLimitNight')"
+                            v-model="batteryConfigList.zendure_output_limit_night"
+                            type="number"
+                            min="0"
+                            max="1200"
+                            step="1"
+                            :postfix="$t('batteryadmin.Watt')"
+                        />
+                    </template>
                 </CardElement>
             </template>
 
@@ -374,6 +425,11 @@ export default defineComponent({
                 { key: 0, value: 'Automatic' },
                 { key: 1, value: 'AlwaysOff' },
                 { key: 2, value: 'AlwaysOn' },
+            ],
+            zendureOutputControlList: [
+                { key: 0, value: 'External' },
+                { key: 1, value: 'Fixed' },
+                { key: 2, value: 'Schedule' },
             ],
             //zendureOutputLimitRule: [
             //    value:number => (value >= 100 || value == 0 || value == 30 || value == 60 || value == 90) || 'Value must be 0,30,60,90 or >= 100'

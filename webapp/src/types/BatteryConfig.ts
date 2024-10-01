@@ -23,6 +23,10 @@ export interface BatteryConfig {
     zendure_bypass_mode: number;
     zendure_max_output: number;
     zendure_auto_shutdown: boolean;
-    zendure_force_limit: boolean;
     zendure_output_limit: number;
+    zendure_output_control: number;
+    zendure_output_limit_day: number;
+    zendure_output_limit_night: number;
+    zendure_sunrise_offset: number;
+    zendure_sunset_offset: number;
 }
