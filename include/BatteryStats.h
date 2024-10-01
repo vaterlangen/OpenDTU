@@ -448,6 +448,8 @@ class ZendureBatteryStats : public BatteryStats {
         void setHwVersion(String&& version) {
             if (!version.isEmpty()){
                 _hwversion = _device + " (" + std::move(version) + ")";
+            }else{
+                _hwversion = _device;
             }
         }
         void setFwVersion(String&& version) { _fwversion = std::move(version); }
