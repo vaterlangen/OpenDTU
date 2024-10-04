@@ -128,6 +128,7 @@ protected:
 
 private:
     void calculateEfficiency();
+    void publishProperty(const String& topic, const String& property, const String& value) const;
 
     bool _verboseLogging = false;
 
