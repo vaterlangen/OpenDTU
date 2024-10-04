@@ -272,7 +272,7 @@ uint16_t ZendureBattery::setOutputLimit(uint16_t limit) const
 
     if (_stats->_output_limit != limit){
         limit = calcOutputLimit(limit);
-        MqttSettings.publishGeneric(_topicWrite, "{\"properties\": {\"" ZENDURE_REPORT_OUTPUT_LIMIT "\": " + String(limit) + "} }", false, 0);
+        publishProperty(_topicWrite, ZENDURE_REPORT_OUTPUT_LIMIT, String(limit));
         MessageOutput.printf("ZendureBattery: Adjusting outputlimit from %d W to %d W\r\n", _stats->_output_limit, limit);
     }
 
@@ -287,7 +287,7 @@ uint16_t ZendureBattery::setInverterMax(uint16_t limit) const
 
     if (_stats->_inverse_max != limit){
         limit = calcOutputLimit(limit);
-        MqttSettings.publishGeneric(_topicWrite, "{\"properties\": {\"" ZENDURE_REPORT_INVERSE_MAX_POWER "\": " + String(limit) + "} }", false, 0);
+        publishProperty(_topicWrite, ZENDURE_REPORT_INVERSE_MAX_POWER, String(limit));
         MessageOutput.printf("ZendureBattery: Adjusting inverter max output from %d W to %d W\r\n", _stats->_inverse_max, limit);
     }
 
@@ -297,18 +297,22 @@ uint16_t ZendureBattery::setInverterMax(uint16_t limit) const
 void ZendureBattery::shutdown() const
 {
     if (!_topicWrite.isEmpty()) {
-        MqttSettings.publishGeneric(_topicWrite, "{\"properties\": {\"" ZENDURE_REPORT_MASTER_SWITCH "\": 1} }", false, 0);
+        publishProperty(_topicWrite, ZENDURE_REPORT_MASTER_SWITCH, "1");
         MessageOutput.printf("ZendureBattery: Shutting down HUB\r\n");
     }
 }
 
+void ZendureBattery::publishProperty(const String& topic, const String& property, const String& value) const
+{
+    MqttSettings.publishGeneric(topic, "{\"properties\": {\"" + property +  "\": " + value + "} }", false, 0);
+}
+
 void ZendureBattery::timesync()
 {
-    struct tm timeinfo;
-    if (!_baseTopic.isEmpty() && getLocalTime(&timeinfo, 5)) {
-        char timeStringBuff[50];
-        strftime(timeStringBuff, sizeof(timeStringBuff), "%s", &timeinfo);
-        MqttSettings.publishGeneric("iot" + _baseTopic + "time-sync/reply","{\"zoneOffset\": \"+00:00\", \"messageId\": " + String(++_messageCounter) + ", \"timestamp\": " + String(timeStringBuff) + "}", false, 0);
+    time_t now;
+    time(&now);
+    if (!_baseTopic.isEmpty() && now > 1577836800 /* epoch 2020-01-01T00:00:00 */) {
+        MqttSettings.publishGeneric("iot" + _baseTopic + "time-sync/reply", "{\"zoneOffset\": \"+00:00\", \"messageId\": " + String(++_messageCounter) + ", \"timestamp\": " + String(now) + "}", false, 0);
         MessageOutput.printf("ZendureBattery: Timesync Reply\r\n");
     }
 }
