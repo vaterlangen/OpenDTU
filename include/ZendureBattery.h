@@ -122,7 +122,7 @@ public:
     void shutdown() const;
 
 protected:
-    void timesync() const;
+    void timesync();
     static String parseVersion(uint32_t version);
     uint16_t calcOutputLimit(uint16_t limit) const;
 
@@ -144,6 +144,8 @@ private:
 
     uint32_t _rateSunCalcMs;
     uint64_t _nextSunCalc;
+
+    uint32_t _messageCounter = 0;
 
     String _deviceId;
 
