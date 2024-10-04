@@ -82,7 +82,7 @@ bool ZendureBattery::init(bool verboseLogging)
 
     // subscribe for timesync messages
     _topicTimesync = _baseTopic + "time-sync";
-    MqttSettings.subscribe(_topicReport, 0/*QoS*/,
+    MqttSettings.subscribe(_topicTimesync, 0/*QoS*/,
             std::bind(&ZendureBattery::onMqttMessageTimesync,
                 this, std::placeholders::_1, std::placeholders::_2,
                 std::placeholders::_3, std::placeholders::_4,
@@ -302,13 +302,13 @@ void ZendureBattery::shutdown() const
     }
 }
 
-void ZendureBattery::timesync() const
+void ZendureBattery::timesync()
 {
     struct tm timeinfo;
     if (!_baseTopic.isEmpty() && getLocalTime(&timeinfo, 5)) {
         char timeStringBuff[50];
         strftime(timeStringBuff, sizeof(timeStringBuff), "%s", &timeinfo);
-        MqttSettings.publishGeneric("iot" + _baseTopic + "time-sync/reply","{\"zoneOffset\": \"+00:00\", \"messageId\": 123, \"timestamp\": " + String(timeStringBuff) + "}", false, 0);
+        MqttSettings.publishGeneric("iot" + _baseTopic + "time-sync/reply","{\"zoneOffset\": \"+00:00\", \"messageId\": " + String(++_messageCounter) + ", \"timestamp\": " + String(timeStringBuff) + "}", false, 0);
         MessageOutput.printf("ZendureBattery: Timesync Reply\r\n");
     }
 }
