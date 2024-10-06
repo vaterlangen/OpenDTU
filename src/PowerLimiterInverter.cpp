@@ -3,21 +3,24 @@
 #include "PowerLimiterInverter.h"
 #include "PowerLimiterBatteryInverter.h"
 #include "PowerLimiterSolarInverter.h"
+#include "PowerLimiterSmartBatteryInverter.h"
 
 std::unique_ptr<PowerLimiterInverter> PowerLimiterInverter::create(
         bool verboseLogging, PowerLimiterInverterConfig const& config)
 {
     std::unique_ptr<PowerLimiterInverter> upInverter;
 
-    if (config.IsSolarPowered) {
-        upInverter = std::make_unique<PowerLimiterSolarInverter>(verboseLogging, config);
-    }
-    else {
-        upInverter = std::make_unique<PowerLimiterBatteryInverter>(verboseLogging, config);
-    }
 
-    if (nullptr == upInverter->_spInverter) { return nullptr; }
+    upInverter = std::make_unique<PowerLimiterSmartBatteryInverter>(verboseLogging, config, std::static_pointer_cast<SmartBatteryProvider>(Battery.getProvider()));
 
+    // if (config.IsSolarPowered) {
+    //     upInverter = std::make_unique<PowerLimiterSolarInverter>(verboseLogging, config);
+    // }
+    // else {
+    //     upInverter = std::make_unique<PowerLimiterBatteryInverter>(verboseLogging, config);
+    // }
+
+    if (!upInverter->isValid()) { return nullptr; }
     return std::move(upInverter);
 }
 
@@ -273,6 +276,17 @@ uint16_t PowerLimiterInverter::getCurrentLimitWatts() const
 {
     auto currentLimitPercent = _spInverter->SystemConfigPara()->getLimitPercent();
     return static_cast<uint16_t>(currentLimitPercent * getInverterMaxPowerWatts() / 100);
+}
+
+float PowerLimiterInverter::getInverterEfficiencyFactor() const
+{
+    float inverterEfficiencyFactor = _spInverter->Statistics()->getChannelFieldValue(TYPE_INV, CH0, FLD_EFF);
+
+    // fall back to hoymiles peak efficiency as per datasheet if inverter
+    // is currently not producing (efficiency is zero in that case)
+    inverterEfficiencyFactor = (inverterEfficiencyFactor > 0) ? inverterEfficiencyFactor/100 : 0.967;
+
+    return inverterEfficiencyFactor;
 }
 
 void PowerLimiterInverter::debug() const

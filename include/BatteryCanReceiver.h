@@ -5,7 +5,7 @@
 #include <driver/twai.h>
 #include <Arduino.h>
 
-class BatteryCanReceiver : public BatteryProvider {
+class BatteryCanReceiver : public TraditionalBatteryProvider {
 public:
     bool init(bool verboseLogging, char const* providerName);
     void deinit() final;

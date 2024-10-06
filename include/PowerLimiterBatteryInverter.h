@@ -13,6 +13,7 @@ public:
     uint16_t applyIncrease(uint16_t increase) final;
     uint16_t standby() final;
     bool isSolarPowered() const final { return false; }
+    bool isSmartBatteryPowered() const final { return false; }
 
 private:
     void setAcOutput(uint16_t expectedOutputWatts) final;
