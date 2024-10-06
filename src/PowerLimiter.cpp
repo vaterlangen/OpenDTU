@@ -18,6 +18,12 @@
 #include <frozen/map.h>
 #include "SunPosition.h"
 
+static auto sSmartBatteryPoweredFilter = [](PowerLimiterInverter const& inv) {
+    return inv.isSmartBatteryPowered();
+};
+
+static const char sSmartBatteryPoweredExpression[] = "smartbattery-powered inverters";
+
 static auto sBatteryPoweredFilter = [](PowerLimiterInverter const& inv) {
     return !inv.isSolarPowered();
 };
@@ -304,16 +310,22 @@ void PowerLimiterClass::loop()
 
     auto coveredBySolar = updateInverterLimits(inverterTotalPower, sSolarPoweredFilter, sSolarPoweredExpression);
     auto remaining = (inverterTotalPower >= coveredBySolar) ? inverterTotalPower - coveredBySolar : 0;
+
+    auto coveredBySmartBattery = updateInverterLimits(remaining, sSmartBatteryPoweredFilter, sSmartBatteryPoweredExpression);
+    auto covered = coveredBySolar + coveredBySmartBattery;
+    remaining = (inverterTotalPower >= covered) ? inverterTotalPower - covered : 0;
+
     auto batteryAllowance = calcBatteryAllowance(remaining);
     auto coveredByBattery = updateInverterLimits(batteryAllowance, sBatteryPoweredFilter, sBatteryPoweredExpression);
 
     if (_verboseLogging) {
         MessageOutput.printf("[DPL::loop] consumption: %d W, "
                 "total inverter target output: %u W, "
-                "solar inverters output: %u W, battery allowance: "
+                "solar inverters output: %u W, smart battery "
+                "inverters output: %u W, battery allowance: "
                 "%u W, battery inverters output: %u W\r\n",
                 consumption, inverterTotalPower, coveredBySolar,
-                batteryAllowance, coveredByBattery);
+                coveredBySmartBattery, batteryAllowance, coveredByBattery);
     }
 
     _lastExpectedInverterOutput = coveredBySolar + coveredByBattery;

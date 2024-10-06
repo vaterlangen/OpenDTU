@@ -3,7 +3,7 @@
 
 #include "Battery.h"
 
-class VictronSmartShunt : public BatteryProvider {
+class VictronSmartShunt : public TraditionalBatteryProvider {
 public:
     bool init(bool verboseLogging) final;
     void deinit() final;

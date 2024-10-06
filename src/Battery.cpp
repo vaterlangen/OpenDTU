@@ -23,6 +23,11 @@ std::shared_ptr<BatteryStats const> BatteryClass::getStats() const
     return _upProvider->getStats();
 }
 
+std::shared_ptr<BatteryProvider> BatteryClass::getProvider() const
+{
+    return _upProvider;
+}
+
 void BatteryClass::init(Scheduler& scheduler)
 {
     scheduler.addTask(_loopTask);
@@ -49,25 +54,25 @@ void BatteryClass::updateSettings()
 
     switch (config.Battery.Provider) {
         case 0:
-            _upProvider = std::make_unique<PylontechCanReceiver>();
+            _upProvider = std::make_shared<PylontechCanReceiver>();
             break;
         case 1:
-            _upProvider = std::make_unique<JkBms::Controller>();
+            _upProvider = std::make_shared<JkBms::Controller>();
             break;
         case 2:
-            _upProvider = std::make_unique<MqttBattery>();
+            _upProvider = std::make_shared<MqttBattery>();
             break;
         case 3:
-            _upProvider = std::make_unique<VictronSmartShunt>();
+            _upProvider = std::make_shared<VictronSmartShunt>();
             break;
         case 4:
-            _upProvider = std::make_unique<PytesCanReceiver>();
+            _upProvider = std::make_shared<PytesCanReceiver>();
             break;
         case 5:
-            _upProvider = std::make_unique<SBSCanReceiver>();
+            _upProvider = std::make_shared<SBSCanReceiver>();
             break;
         case 7:
-            _upProvider = std::make_unique<ZendureBattery>();
+            _upProvider = std::make_shared<ZendureBattery>();
             break;
         default:
             MessageOutput.printf("[Battery] Unknown provider: %d\r\n", config.Battery.Provider);

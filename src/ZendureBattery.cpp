@@ -264,34 +264,34 @@ uint16_t ZendureBattery::calcOutputLimit(uint16_t limit) const
     return 30 * base + 30 * remain;
 }
 
-uint16_t ZendureBattery::setOutputLimit(uint16_t limit) const
+uint16_t ZendureBattery::setOutputLimit(const uint16_t limit)
 {
     if (_topicWrite.isEmpty() || !_stats->updateAvailable(ZENDURE_ALIVE_MS)) {
         return _stats->_output_limit;
     }
 
-    if (_stats->_output_limit != limit){
-        limit = calcOutputLimit(limit);
-        publishProperty(_topicWrite, ZENDURE_REPORT_OUTPUT_LIMIT, String(limit));
-        MessageOutput.printf("ZendureBattery: Adjusting outputlimit from %d W to %d W\r\n", _stats->_output_limit, limit);
+    auto l = std::max(calcOutputLimit(limit), _stats->_inverse_max);
+    if (_stats->_output_limit != l){
+        publishProperty(_topicWrite, ZENDURE_REPORT_OUTPUT_LIMIT, String(l));
+        MessageOutput.printf("ZendureBattery: Adjusting outputlimit from %d W to %d W\r\n", _stats->_output_limit, l);
     }
 
-    return limit;
+    return l;
 }
 
-uint16_t ZendureBattery::setInverterMax(uint16_t limit) const
+uint16_t ZendureBattery::setInverterMax(const uint16_t limit) const
 {
     if (_topicWrite.isEmpty() || !_stats->updateAvailable(ZENDURE_ALIVE_MS)) {
         return _stats->_inverse_max;
     }
 
-    if (_stats->_inverse_max != limit){
-        limit = calcOutputLimit(limit);
-        publishProperty(_topicWrite, ZENDURE_REPORT_INVERSE_MAX_POWER, String(limit));
-        MessageOutput.printf("ZendureBattery: Adjusting inverter max output from %d W to %d W\r\n", _stats->_inverse_max, limit);
+    auto l = calcOutputLimit(limit);
+    if (_stats->_inverse_max != l){
+        publishProperty(_topicWrite, ZENDURE_REPORT_INVERSE_MAX_POWER, String(l));
+        MessageOutput.printf("ZendureBattery: Adjusting inverter max output from %d W to %d W\r\n", _stats->_inverse_max, l);
     }
 
-    return limit;
+    return l;
 }
 
 void ZendureBattery::shutdown() const
@@ -300,6 +300,70 @@ void ZendureBattery::shutdown() const
         publishProperty(_topicWrite, ZENDURE_REPORT_MASTER_SWITCH, "1");
         MessageOutput.printf("ZendureBattery: Shutting down HUB\r\n");
     }
+}
+
+uint16_t ZendureBattery::increaseOutputLimit(const uint16_t limit)
+{
+    auto current_limit = _stats->_output_limit;
+    auto new_limit = setOutputLimit(current_limit + limit);
+    return current_limit - new_limit;
+}
+uint16_t ZendureBattery::decreaseOutputLimit(const uint16_t limit)
+{
+    auto current_limit = _stats->_output_limit;
+    auto new_limit = 0;
+    if (current_limit > limit){
+        new_limit = setOutputLimit(current_limit - limit);
+    }else{
+        new_limit = setOutputLimit(0);
+    }
+    return new_limit - current_limit;
+}
+
+uint16_t ZendureBattery::getOutputLimit() const
+{
+    return _stats->_output_limit;
+}
+
+uint16_t ZendureBattery::getSolarPower() const
+{
+    return _stats->_input_power;
+}
+
+uint16_t ZendureBattery::getChargePower() const
+{
+    return std::max(_stats->_charge_power - 150, 0); // keep 150 for charging
+}
+
+uint16_t ZendureBattery::getDischargePower() const
+{
+    return _stats->_discharge_power;
+}
+
+uint16_t ZendureBattery::getBatteryPowerAvailable() const
+{
+    return std::min(_stats->_inverse_max - _stats->_discharge_power, 1200);
+}
+
+bool ZendureBattery::isFull() const
+{
+    if (_stats->isSoCValid() && _stats->getSoC() >= _stats->_soc_max)
+    {
+        return true;
+    }
+
+    return false;
+}
+bool ZendureBattery::setBypass(const bool bypass)
+{
+    if (_topicWrite.isEmpty() || _stats->_bypass_state == bypass) {
+        return _stats->_bypass_state;
+    }
+
+    const auto mode = bypass ? ZendureBatteryStats::BypassMode::AlwaysOn : ZendureBatteryStats::BypassMode::AlwaysOff;
+    publishProperty(_topicWrite, ZENDURE_REPORT_BYPASS_MODE, String(static_cast<uint8_t>(mode)));
+    MessageOutput.printf("ZendureBattery: Turning bypass switch %s\r\n", bypass ? "on" : "off");
+    return bypass;
 }
 
 void ZendureBattery::publishProperty(const String& topic, const String& property, const String& value) const

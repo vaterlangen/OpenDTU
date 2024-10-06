@@ -4,7 +4,7 @@
 #include "Battery.h"
 #include <espMqttClient.h>
 
-class MqttBattery : public BatteryProvider {
+class MqttBattery : public TraditionalBatteryProvider {
 public:
     MqttBattery() = default;
 

@@ -108,7 +108,7 @@
 #define ZENDURE_ALIVE_MS                            (5 * 60 * 1000)
 #define ZENDURE_NO_REDUCED_UPDATE
 
-class ZendureBattery : public BatteryProvider {
+class ZendureBattery : public SmartBatteryProvider {
 public:
     ZendureBattery() = default;
 
@@ -117,9 +117,20 @@ public:
     void loop() final;
     std::shared_ptr<BatteryStats> getStats() const final { return _stats; }
 
-    uint16_t setOutputLimit(uint16_t limit) const;
-    uint16_t setInverterMax(uint16_t limit) const;
+    uint16_t setInverterMax(const uint16_t limit) const;
     void shutdown() const;
+
+    uint16_t getSolarPower() const;
+    uint16_t getChargePower() const;
+    uint16_t getDischargePower() const;
+    uint16_t getBatteryPowerAvailable() const;
+    uint16_t getOutputLimit() const;
+    bool isFull() const;
+    uint16_t setOutputLimit(const uint16_t limit);
+    bool setBypass(const bool bypass);
+
+    uint16_t increaseOutputLimit(const uint16_t limit);
+    uint16_t decreaseOutputLimit(const uint16_t limit);
 
 protected:
     void timesync();

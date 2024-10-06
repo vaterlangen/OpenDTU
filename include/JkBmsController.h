@@ -14,7 +14,7 @@ class DataPointContainer;
 
 namespace JkBms {
 
-class Controller : public BatteryProvider {
+class Controller : public TraditionalBatteryProvider {
     public:
         Controller() = default;
 
