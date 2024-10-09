@@ -763,7 +763,6 @@
         "ZendureChargeThrough": "Charge Through Settings",
         "ZendureChargeThroughEnabled": "Charge Through",
         "ZendureChargeThroughInterval": "Maximum time without full charge"
-
     },
     "inverteradmin": {
         "InverterSettings": "Inverter Settings",
