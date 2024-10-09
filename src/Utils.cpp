@@ -256,3 +256,17 @@ template std::optional<int32_t> Utils::getJsonElement(JsonObjectConst root, char
 template std::optional<float> Utils::getJsonElement(JsonObjectConst root, char const* key, size_t nesting /* = 0*/);
 template std::optional<JsonObjectConst> Utils::getJsonElement(JsonObjectConst root, char const* key, size_t nesting /* = 0*/);
 template std::optional<JsonArrayConst> Utils::getJsonElement(JsonObjectConst root, char const* key, size_t nesting /* = 0*/);
+
+
+bool Utils::getEpoch(time_t* epoch, uint32_t ms)
+{
+    uint32_t start = millis();
+    while((millis()-start) <= ms) {
+        time(epoch);
+        if (*epoch > 1577836800) { /* epoch 2020-01-01T00:00:00 */
+            return true;
+        }
+        delay(10);
+    }
+    return false;
+}

@@ -290,6 +290,25 @@
                     />
                 </CardElement>
 
+                <CardElement :text="$t('batteryadmin.ZendureChargeThrough')" textVariant="text-bg-primary" addSpace>
+                    <InputElement
+                        :label="$t('batteryadmin.ZendureChargeThroughEnabled')"
+                        v-model="batteryConfigList.zendure_charge_through_enable"
+                        type="checkbox"
+                    />
+                    <template v-if="batteryConfigList.zendure_charge_through_enable">
+                        <InputElement
+                            :label="$t('batteryadmin.ZendureChargeThroughInterval')"
+                            v-model="batteryConfigList.zendure_charge_through_interval"
+                            type="number"
+                            min="0"
+                            max="8766"
+                            step="1"
+                            :postfix="$t('batteryadmin.Hours')"
+                        />
+                    </template>
+                </CardElement>
+
                 <CardElement :text="$t('batteryadmin.ZendureOutputControl')" textVariant="text-bg-primary" addSpace>
                     <div class="row mb-3">
                         <label for="zendure_output_mode" class="col-sm-2 col-form-label">
@@ -302,7 +321,7 @@
                                 v-model="batteryConfigList.zendure_output_control"
                             >
                                 <option v-for="u in zendureOutputControlList" :key="u.key" :value="u.key">
-                                    {{ u.value }}
+                                    {{ $t(`batteryadmin.ZendureOutputMode` + u.value) }}
                                 </option>
                             </select>
                         </div>

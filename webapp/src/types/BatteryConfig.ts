@@ -29,4 +29,6 @@ export interface BatteryConfig {
     zendure_output_limit_night: number;
     zendure_sunrise_offset: number;
     zendure_sunset_offset: number;
+    zendure_charge_through_enable: boolean;
+    zendure_charge_through_interval: number;
 }
