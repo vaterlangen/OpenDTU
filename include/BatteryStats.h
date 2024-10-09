@@ -8,6 +8,7 @@
 #include "JkBmsDataPoints.h"
 #include "VeDirectShuntController.h"
 #include <cfloat>
+#include <utility>
 
 // mandatory interface for all kinds of batteries
 class BatteryStats {
@@ -381,17 +382,19 @@ class ZendureBatteryStats : public BatteryStats {
 
             inline uint8_t getCellCount() const { return _cellCount; }
             inline uint16_t getCapacity() const { return _capacity; }
+            inline uint16_t getAvailableCapacity() const { return _capacity_avail; };
             inline String getName() const { return _name; }
 
             static std::shared_ptr<PackStats> fromSerial(String serial){
                 if (serial.length() == 15) {
                     if (serial.startsWith("AO4H")){
-                        // return std::make_shared<PackStats>(AB1000(serial));
                         return std::make_shared<PackStats>(PackStats(serial, "AB1000", 960));
                     }
                     if (serial.startsWith("CO4H")){
-                        // return std::make_shared<PackStats>(AB2000(serial));
                         return std::make_shared<PackStats>(PackStats(serial, "AB2000", 1920));
+                    }
+                    if (serial.startsWith("R04Y")){
+                        return std::make_shared<PackStats>(PackStats(serial, "AIO2400", 2400));
                     }
                     return std::make_shared<PackStats>(PackStats(serial));
                 }
@@ -406,19 +409,22 @@ class ZendureBatteryStats : public BatteryStats {
             void setFwVersion(String&& version) { _fwversion = std::move(version); }
 
         private:
-            String _serial = "";
-            String _name = "UNKOWN";
+            String _serial = String();
+            String _name = String("UNKOWN");
             uint16_t _capacity = 0;
             uint8_t _cellCount = 15;
 
-            String _fwversion = "";
-            String _hwversion = "";
+            String _fwversion = String();
+            String _hwversion = String();
 
             uint16_t _cell_voltage_min = 0;
             uint16_t _cell_voltage_max = 0;
             uint16_t _cell_voltage_spread = 0;
             uint16_t _cell_voltage_avg = 0;
             int16_t _cell_temperature_max = 0;
+
+            float _state_of_health = 1;
+            uint16_t _capacity_avail = 0;
 
             float _voltage_total = 0.0;
             float _current = 0.0;
@@ -435,6 +441,8 @@ class ZendureBatteryStats : public BatteryStats {
         void mqttPublish() const;
         void getLiveViewData(JsonVariant& root) const;
 
+        std::map<size_t, std::shared_ptr<PackStats>> getPackDataList() const { return _packData; }
+
         bool supportsAlarmsAndWarnings() const final { return false; }
 
     protected:
@@ -442,7 +450,7 @@ class ZendureBatteryStats : public BatteryStats {
         std::optional<std::shared_ptr<ZendureBatteryStats::PackStats> > addPackData(size_t index, String serial);
 
         uint16_t getCapacity() const { return _capacity; };
-        uint16_t getAvailableCapacity() const { return getCapacity() * (static_cast<float>(_soc_max - _soc_min) / 100.0); };
+        uint16_t getUseableCapacity() const { return _capacity_avail * (static_cast<float>(_soc_max - _soc_min) / 100.0); };
 
     private:
         void setHwVersion(String&& version) {
@@ -467,7 +475,7 @@ class ZendureBatteryStats : public BatteryStats {
             _device = std::move(device);
         }
 
-        String _device = "Unkown";
+        String _device = String("Unkown");
 
         std::map<size_t, std::shared_ptr<PackStats>> _packData = std::map<size_t, std::shared_ptr<PackStats> >();
 
@@ -486,6 +494,7 @@ class ZendureBatteryStats : public BatteryStats {
 
         float _efficiency = 0.0;
         uint16_t _capacity = 0;
+        uint16_t _capacity_avail = 0;
 
         uint16_t _charge_power = 0;
         uint16_t _discharge_power = 0;
@@ -505,4 +514,9 @@ class ZendureBatteryStats : public BatteryStats {
         bool _heat_state = false;
         bool _auto_shutdown = false;
         bool _buzzer = false;
+
+        std::optional<uint64_t> _last_full_timestamp = std::nullopt;
+        std::optional<uint32_t> _last_full_charge_hours = std::nullopt;
+        std::optional<uint64_t> _last_empty_timestamp = std::nullopt;
+        std::optional<bool>  _charge_through_state = std::nullopt;
 };

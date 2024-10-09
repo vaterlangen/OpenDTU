@@ -648,12 +648,19 @@
         "Percent": "%",
         "Watt": "W",
         "Minutes": "@:networkadmin.Minutes",
+        "Hours": "Hours",
         "Mode": "@:ntpinfo.Mode",
         "ZendureOutputControl": "Output Control",
+        "ZendureOutputModeExternal": "Controled by Others",
+        "ZendureOutputModeFixed": "Static setup",
+        "ZendureOutputModeSchedule": "Schedule",
         "ZendureSunriseOffset": "@:ntpinfo.Sunrise offset",
         "ZendureSunsetOffset": "@:ntpinfo.Sunset offset",
         "ZendureOutputLimitDay": "@:batteryadmin.ZendureOutputLimit (@:ntpinfo.Day)",
-        "ZendureOutputLimitNight": "@:batteryadmin.ZendureOutputLimit (@:ntpinfo.Night)"
+        "ZendureOutputLimitNight": "@:batteryadmin.ZendureOutputLimit (@:ntpinfo.Night)",
+        "ZendureChargeThrough": "Charge Through Settings",
+        "ZendureChargeThroughEnabled": "Charge Through",
+        "ZendureChargeThroughInterval": "Maximum time without full charge"
     },
     "inverteradmin": {
         "InverterSettings": "Paramètres des onduleurs",
@@ -1024,6 +1031,8 @@
         "settings": "Settings",
         "remainOutTime": "Remaining discharge time",
         "remainInTime": "Remaining charge time",
-        "unavail": "N/A"
+        "unavail": "N/A",
+        "useableCapacity": "Useable capacity",
+        "chargethrough": "Charge through"
     }
 }

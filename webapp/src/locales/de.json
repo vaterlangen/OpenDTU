@@ -726,12 +726,19 @@
         "Percent": "%",
         "Watt": "W",
         "Minutes": "@:networkadmin.Minutes",
+        "Hours": "Stunden",
         "Mode": "@:ntpinfo.Mode",
-        "ZendureOutputControl": "Ausgabesteuerung",
+        "ZendureOutputControl": "Steuerung der Leistungsabgabe",
+        "ZendureOutputModeExternal": "Extern gesteuert",
+        "ZendureOutputModeFixed": "Statische Einstellung",
+        "ZendureOutputModeSchedule": "Zeitgesteuert",
         "ZendureSunriseOffset": "Offset @:ntpinfo.Sunrise",
         "ZendureSunsetOffset": "Offset @:ntpinfo.Sunset",
         "ZendureOutputLimitDay": "@:batteryadmin.ZendureOutputLimit (@:ntpinfo.Day)",
-        "ZendureOutputLimitNight": "@:batteryadmin.ZendureOutputLimit (@:ntpinfo.Night)"
+        "ZendureOutputLimitNight": "@:batteryadmin.ZendureOutputLimit (@:ntpinfo.Night)",
+        "ZendureChargeThrough": "Vollladeeinstellungen",
+        "ZendureChargeThroughEnabled": "Vollladen",
+        "ZendureChargeThroughInterval": "Maximales Interval"
     },
     "inverteradmin": {
         "InverterSettings": "Wechselrichter Einstellungen",
@@ -1070,6 +1077,8 @@
         "settings": "Einstellungen",
         "remainOutTime": "Verbleibende Entladezeit",
         "remainInTime": "Verbleibende Ladezeit",
-        "unavail": "N/A"
+        "unavail": "N/A",
+        "useableCapacity": "Nutzbare Kapazität",
+        "chargethrough": "Vollladezyklus"
     }
 }

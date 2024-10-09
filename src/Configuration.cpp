@@ -106,6 +106,8 @@ void ConfigurationClass::serializeBatteryConfig(BatteryConfig const& source, Jso
     target["zendure_output_limit_night"] = config.Battery.ZendureOutputLimitNight;
     target["zendure_sunrise_offset"] = config.Battery.ZendureSunriseOffset;
     target["zendure_sunset_offset"] = config.Battery.ZendureSunsetOffset;
+    target["zendure_charge_through_enable"] = config.Battery.ZendureChargeThroughEnable;
+    target["zendure_charge_through_interval"] = config.Battery.ZendureChargeThroughInterval;
 }
 
 bool ConfigurationClass::write()
@@ -415,6 +417,8 @@ void ConfigurationClass::deserializeBatteryConfig(JsonObject const& source, Batt
     target.ZendureOutputLimitNight = source["zendure_output_limit_night"] | BATTERY_ZENDURE_OUTPUT_LIMIT_NIGHT;
     target.ZendureSunriseOffset = source["zendure_sunrise_offset"] | BATTERY_ZENDURE_SUNRISE_OFFSET;
     target.ZendureSunsetOffset = source["zendure_sunset_offset"] | BATTERY_ZENDURE_SUNSET_OFFSET;
+    target.ZendureChargeThroughEnable = source["zendure_charge_through_enable"] | BATTERY_ZENDURE_CHARGE_THROUGH_ENABLE;
+    target.ZendureChargeThroughInterval = source["zendure_charge_through_interval"] | BATTERY_ZENDURE_CHARGE_THROUGH_INTERVAL;
 }
 
 bool ConfigurationClass::read()

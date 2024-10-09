@@ -227,9 +227,28 @@ void MqttHandleBatteryHassClass::loop()
             publishSensor("State", NULL, "state");
             publishSensor("Number of Batterie Packs", "mdi:counter", "numPacks");
             publishSensor("Efficiency", NULL, "efficiency", NULL, "measurement", "%");
+            publishSensor("Last Full Charge", "mdi:timelapse", "lastFullCharge", NULL, NULL, "h");
 
-            // ToDo: Include data points for packs
-            // for (const auto& [sn, value] : _packData){
+            // auto stats = std::reinterpret_pointer_cast<const ZendureBatteryStats>(Battery.getStats());
+            // if (stats)
+            // {
+            //     for (const auto& [i, value] : stats->getPackDataList()){
+            //         if (!value){
+            //             continue;
+            //         }
+            //         auto id = String(i) + "/";
+            //         publishSensor("Cell Min Voltage", NULL, String(id + "CellMinMilliVolt").c_str(), "voltage", "measurement", "mV");
+            //         publishSensor("Cell Average Voltage", NULL, String(id + "CellAvgMilliVolt").c_str(), "voltage", "measurement", "mV");
+            //         publishSensor("Cell Max Voltage", NULL, String(id + "CellMaxMilliVolt").c_str(), "voltage", "measurement", "mV");
+            //         publishSensor("Cell Voltage Diff", "mdi:battery-alert", String(id + "CellDiffMilliVolt").c_str(), "voltage", "measurement", "mV");
+            //         publishSensor("Cell Max Temperature", NULL, String(id + "CellMaxTemperature").c_str(), "temperature", "measurement", "°C");
+            //         publishSensor("Power", NULL, String(id + "power").c_str(), "power", "measurement", "W");
+            //         publishSensor("Voltage", NULL, String(id + "voltage").c_str(), "voltage", "measurement", "V");
+            //         publishSensor("Current", NULL, String(id + "current").c_str(), "current", "measurement", "A");
+            //         publishSensor("State Of Charge", NULL, String(id + "stateOfCharge").c_str(), NULL, "measurement", "%");
+            //         publishSensor("State Of Health", NULL, String(id + "stateOfHealth").c_str(), NULL, "measurement", "%");
+            //         publishSensor("State", NULL, "state");
+            //     }
             // }
 
             publishSensor("Solar Power MPPT 1", "mdi:solar-power", "solarPowerMppt1", "power", "measurement", "W");

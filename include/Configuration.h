@@ -167,6 +167,8 @@ struct BATTERY_CONFIG_T {
     int16_t ZendureSunsetOffset;
     uint16_t ZendureOutputLimitDay;
     uint16_t ZendureOutputLimitNight;
+    bool ZendureChargeThroughEnable;
+    uint16_t ZendureChargeThroughInterval;
 };
 using BatteryConfig = struct BATTERY_CONFIG_T;
 
