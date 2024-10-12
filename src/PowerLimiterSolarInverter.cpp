@@ -73,7 +73,7 @@ uint16_t PowerLimiterSolarInverter::scaleLimit(uint16_t expectedOutputWatts)
     if (!isProducing()) { return expectedOutputWatts; }
 
     auto pStats = _spInverter->Statistics();
-    std::vector<ChannelNum_t> dcChnls = _spInverter->getChannels();
+    std::vector<ChannelNum_t> dcChnls = _spInverter->getChannelsDC();
     std::vector<MpptNum_t> dcMppts = _spInverter->getMppts();
     size_t dcTotalChnls = dcChnls.size();
     size_t dcTotalMppts = dcMppts.size();
@@ -110,7 +110,7 @@ uint16_t PowerLimiterSolarInverter::scaleLimit(uint16_t expectedOutputWatts)
 
         for (auto& m : dcMppts) {
             float mpptPowerAC = 0.0;
-            std::vector<ChannelNum_t> mpptChnls = _spInverter->getChannelsByMppt(m);
+            std::vector<ChannelNum_t> mpptChnls = _spInverter->getChannelsDCByMppt(m);
 
             for (auto& c : mpptChnls) {
                 mpptPowerAC += pStats->getChannelFieldValue(TYPE_DC, c, FLD_PDC) * inverterEfficiencyFactor;
@@ -169,7 +169,7 @@ uint16_t PowerLimiterSolarInverter::scaleLimit(uint16_t expectedOutputWatts)
     size_t dcProdMppts = 0;
     for (auto& m : dcMppts) {
         float dcPowerMppt = 0.0;
-        std::vector<ChannelNum_t> mpptChnls = _spInverter->getChannelsByMppt(m);
+        std::vector<ChannelNum_t> mpptChnls = _spInverter->getChannelsDCByMppt(m);
 
         for (auto& c : mpptChnls) {
             dcPowerMppt += pStats->getChannelFieldValue(TYPE_DC, c, FLD_PDC);
