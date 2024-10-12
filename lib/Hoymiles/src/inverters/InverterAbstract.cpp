@@ -299,7 +299,7 @@ void InverterAbstract::resetRadioStats()
     RadioStats = {};
 }
 
-std::vector<ChannelNum_t> InverterAbstract::getChannels() const
+std::vector<ChannelNum_t> InverterAbstract::getChannelsDC() const
 {
     std::vector<ChannelNum_t> l;
     for (uint8_t i = 0; i < getChannelMetaDataSize(); i++) {
@@ -320,7 +320,7 @@ std::vector<MpptNum_t> InverterAbstract::getMppts() const
     return l;
 }
 
-std::vector<ChannelNum_t> InverterAbstract::getChannelsByMppt(const MpptNum_t mppt) const
+std::vector<ChannelNum_t> InverterAbstract::getChannelsDCByMppt(const MpptNum_t mppt) const
 {
     std::vector<ChannelNum_t> l;
     for (uint8_t i = 0; i < getChannelMetaDataSize(); i++) {
