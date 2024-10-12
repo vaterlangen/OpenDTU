@@ -130,8 +130,8 @@ public:
     SystemConfigParaParser* SystemConfigPara();
 
     std::vector<MpptNum_t> getMppts() const;
-    std::vector<ChannelNum_t> getChannels() const;
-    std::vector<ChannelNum_t> getChannelsByMppt(const MpptNum_t mppt) const;
+    std::vector<ChannelNum_t> getChannelsDC() const;
+    std::vector<ChannelNum_t> getChannelsDCByMppt(const MpptNum_t mppt) const;
 
 protected:
     HoymilesRadio* _radio;
