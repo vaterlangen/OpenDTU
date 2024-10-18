@@ -1,6 +1,5 @@
 #include "MessageOutput.h"
 #include "PowerLimiterSolarInverter.h"
-#include "inverters/HMS_4CH.h"
 
 PowerLimiterSolarInverter::PowerLimiterSolarInverter(bool verboseLogging, PowerLimiterInverterConfig const& config)
     : PowerLimiterInverter(verboseLogging, config) { }
