@@ -322,13 +322,14 @@ bool ZendureBattery::checkChargeThrough(uint32_t predictHours /* = 0 */)
 
 void ZendureBattery::setTargetSoCs(const float soc_min, const float soc_max)
 {
-    //log("Enter 'setTargetSoCs': %d && %d | %f | %f ", !_topicWrite.isEmpty(), alive(), soc_min, soc_max);
-    if (!_topicWrite.isEmpty() && alive()) {
-        if (_stats->_soc_min != soc_min || _stats->_soc_max != soc_max) {
-            MqttSettings.publishGeneric(_topicWrite, "{\"properties\": {\"" ZENDURE_REPORT_MIN_SOC "\": " + String(soc_min * 10, 0) + ", \"" ZENDURE_REPORT_MAX_SOC  "\": " + String(soc_max * 10, 0) + "} }", false, 0);
-            publishProperties(_topicWrite, ZENDURE_REPORT_MIN_SOC, String(soc_min * 10, 0), ZENDURE_REPORT_MAX_SOC, String(soc_max * 10, 0));
-            log("Setting target minSoC from %.1f %% to %.1f %% and target maxSoC from %.1f %% to %.1f %%", _stats->_soc_min, soc_min, _stats->_soc_max, soc_max);
-        }
+    if (_topicWrite.isEmpty() || !alive()) {
+        return;
+    }
+
+    if (_stats->_soc_min != soc_min || _stats->_soc_max != soc_max) {
+        MqttSettings.publishGeneric(_topicWrite, "{\"properties\": {\"" ZENDURE_REPORT_MIN_SOC "\": " + String(soc_min * 10, 0) + ", \"" ZENDURE_REPORT_MAX_SOC  "\": " + String(soc_max * 10, 0) + "} }", false, 0);
+        publishProperties(_topicWrite, ZENDURE_REPORT_MIN_SOC, String(soc_min * 10, 0), ZENDURE_REPORT_MAX_SOC, String(soc_max * 10, 0));
+        log("Setting target minSoC from %.1f %% to %.1f %% and target maxSoC from %.1f %% to %.1f %%", _stats->_soc_min, soc_min, _stats->_soc_max, soc_max);
     }
 }
 
@@ -412,7 +413,7 @@ void ZendureBattery::publishProperties(const String& topic, Arg&&... args) const
     {
         if (even) {
             out += "\"" + d + "\": ";
-        }else{
+        } else {
             out += d + ", ";
         }
         even = !even;
@@ -430,7 +431,8 @@ void ZendureBattery::timesync()
     }
 }
 
-bool ZendureBattery::setChargeThrough(const bool value, const bool publish /* = true */) {
+bool ZendureBattery::setChargeThrough(const bool value, const bool publish /* = true */)
+{
     if (!_stats->_charge_through_state.has_value() || value != _stats->_charge_through_state) {
         _stats->_charge_through_state = value;
         log("%s charge-through mode!", value ? "Enabling" : "Disabling");
@@ -596,52 +598,55 @@ void ZendureBattery::onMqttMessageReport(espMqttClientTypes::MessageProperties c
     if (_stats->_num_batteries != 0 && (*packData).size() == _stats->_num_batteries) {
         for (size_t i = 0 ; i < _stats->_num_batteries ; i++) {
             auto serial = Utils::getJsonElement<String>((*packData)[i], ZENDURE_REPORT_PACK_SERIAL);
-            if (serial.has_value()) {
-                if (_stats->addPackData(i+1, *serial) == nullptr) {
-                    log("Invalid or unkown serial '%s' in '%s'", (*serial).c_str(), logValue.c_str());
-                }
-            }else{
+            if (!serial.has_value()) {
                 log("Missing serial of battery pack in '%s'", logValue.c_str());
+                continue;
+            }
+            if (_stats->addPackData(i+1, *serial) == nullptr) {
+                log("Invalid or unkown serial '%s' in '%s'", (*serial).c_str(), logValue.c_str());
             }
         }
     }
 
     // get additional data only if all packs were identified
-    if (_stats->_packData.size() == _stats->_num_batteries) {
-        for (auto packDataJson : *packData) {
-            auto serial = Utils::getJsonElement<String>(packDataJson, ZENDURE_REPORT_PACK_SERIAL);
-            auto state = Utils::getJsonElement<uint8_t>(packDataJson, ZENDURE_REPORT_PACK_STATE);
-            auto version = Utils::getJsonElement<uint32_t>(packDataJson, ZENDURE_REPORT_PACK_FW_VERSION);
-            auto soh = Utils::getJsonElement<uint16_t>(packDataJson, ZENDURE_REPORT_PACK_HEALTH);
+    if (_stats->_packData.size() != _stats->_num_batteries) {
+        return;
+    }
 
-            // do not waste processing time if nothing to do
-            if (!serial.has_value() || !(state.has_value() || version.has_value())) {
+    for (auto packDataJson : *packData) {
+        auto serial = Utils::getJsonElement<String>(packDataJson, ZENDURE_REPORT_PACK_SERIAL);
+        auto state = Utils::getJsonElement<uint8_t>(packDataJson, ZENDURE_REPORT_PACK_STATE);
+        auto version = Utils::getJsonElement<uint32_t>(packDataJson, ZENDURE_REPORT_PACK_FW_VERSION);
+        auto soh = Utils::getJsonElement<uint16_t>(packDataJson, ZENDURE_REPORT_PACK_HEALTH);
+
+        // do not waste processing time if nothing to do
+        if (!serial.has_value() || !(state.has_value() || version.has_value())) {
+            continue;
+        }
+
+        // find pack data related to serial number
+        for (auto& entry : _stats->_packData) {
+            auto pack = entry.second;
+            if (pack->_serial != serial) {
                 continue;
             }
-
-            // find pack data related to serial number
-            for (auto& entry : _stats->_packData) {
-                auto pack = entry.second;
-                if (pack->_serial == serial) {
-                    if (state.has_value()) {
-                        pack->_state = static_cast<ZendureBatteryStats::State>(*state);
-                    }
-
-                    if (version.has_value()) {
-                        pack->setFwVersion(std::move(parseVersion(*version)));
-                    }
-
-                    if (soh.has_value()) {
-                        pack->_state_of_health = static_cast<float>(*soh) / 10.0;
-                        pack->_capacity_avail = pack->_capacity * pack->_state_of_health / 100.0;
-                    }
-
-                    pack->_lastUpdate = ms;
-
-                    // we found the pack we searched for, so terminate loop here
-                    break;
-                }
+            if (state.has_value()) {
+                pack->_state = static_cast<ZendureBatteryStats::State>(*state);
             }
+
+            if (version.has_value()) {
+                pack->setFwVersion(std::move(parseVersion(*version)));
+            }
+
+            if (soh.has_value()) {
+                pack->_state_of_health = static_cast<float>(*soh) / 10.0;
+                pack->_capacity_avail = pack->_capacity * pack->_state_of_health / 100.0;
+            }
+
+            pack->_lastUpdate = ms;
+
+            // we found the pack we searched for, so terminate loop here
+            break;
         }
     }
 }
@@ -749,8 +754,6 @@ void ZendureBattery::onMqttMessageLog(espMqttClientTypes::MessageProperties cons
 
         _stats->_num_batteries = num;
         setSoC(static_cast<float>(soc) / 10.0 / num, ms);
-        //_stats->setSoC(static_cast<float>(soc) / 10.0 / num, 2, ms);
-        //_stats->setVoltage(static_cast<float>(voltage) / 1000 / num, ms);
         _stats->setVoltage(v[ZENDURE_LOG_OFFSET_VOLTAGE].as<float>() / 10.0, ms);
         _stats->setCurrent(static_cast<float>(current) / 10.0, 1, ms);
         _stats->setDischargeCurrentLimit(static_cast<float>(_stats->_inverse_max) / _stats->getVoltage(), ms);
