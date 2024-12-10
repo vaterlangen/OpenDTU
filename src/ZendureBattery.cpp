@@ -546,11 +546,6 @@ void ZendureBattery::onMqttMessageReport(espMqttClientTypes::MessageProperties c
             _stats->_input_limit = *input_limit;
         }
 
-        // auto output_limit = Utils::getJsonElement<uint16_t>(*props, ZENDURE_REPORT_OUTPUT_LIMIT);
-        // if (output_limit.has_value()) {
-        //     _stats->_output_limit = *output_limit;
-        // }
-
         auto inverse_max = Utils::getJsonElement<uint16_t>(*props, ZENDURE_REPORT_INVERSE_MAX_POWER);
         if (inverse_max.has_value()) {
             _stats->_inverse_max = *inverse_max;
@@ -625,23 +620,23 @@ void ZendureBattery::onMqttMessageReport(espMqttClientTypes::MessageProperties c
             }
 
             // find pack data related to serial number
-            for (auto [index, entry] : _stats->_packData) {
-                auto pack = _stats->getPackData(index);
-                if (pack.has_value() && (*pack)->_serial == serial) {
+            for (auto& entry : _stats->_packData) {
+                auto pack = entry.second;
+                if (pack->_serial == serial) {
                     if (state.has_value()) {
-                        (*pack)->_state = static_cast<ZendureBatteryStats::State>(*state);
+                        pack->_state = static_cast<ZendureBatteryStats::State>(*state);
                     }
 
                     if (version.has_value()) {
-                        (*pack)->setFwVersion(std::move(parseVersion(*version)));
+                        pack->setFwVersion(std::move(parseVersion(*version)));
                     }
 
                     if (soh.has_value()) {
-                        (*pack)->_state_of_health = static_cast<float>(*soh) / 10.0;
-                        (*pack)->_capacity_avail = (*pack)->_capacity * (*pack)->_state_of_health / 100.0;
+                        pack->_state_of_health = static_cast<float>(*soh) / 10.0;
+                        pack->_capacity_avail = pack->_capacity * pack->_state_of_health / 100.0;
                     }
 
-                    (*pack)->_lastUpdate = ms;
+                    pack->_lastUpdate = ms;
 
                     // we found the pack we searched for, so terminate loop here
                     break;
