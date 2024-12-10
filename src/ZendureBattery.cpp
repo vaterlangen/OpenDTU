@@ -597,7 +597,7 @@ void ZendureBattery::onMqttMessageReport(espMqttClientTypes::MessageProperties c
         for (size_t i = 0 ; i < _stats->_num_batteries ; i++) {
             auto serial = Utils::getJsonElement<String>((*packData)[i], ZENDURE_REPORT_PACK_SERIAL);
             if (serial.has_value()) {
-                if (!_stats->addPackData(i+1, *serial).has_value()) {
+                if (_stats->addPackData(i+1, *serial) == nullptr) {
                     log("Invalid or unkown serial '%s' in '%s'", (*serial).c_str(), logValue.c_str());
                 }
             }else{
@@ -717,24 +717,24 @@ void ZendureBattery::onMqttMessageLog(espMqttClientTypes::MessageProperties cons
             auto cdel = cmax - cmin;
 
             auto pack = _stats->getPackData(i);
-            if (pack.has_value()) {
-                auto cavg = pvol / (*pack)->getCellCount();
+            if (pack != nullptr) {
+                auto cavg = pvol / pack->getCellCount();
 
-                (*pack)->_cell_voltage_min = static_cast<uint16_t>(cmin);
-                (*pack)->_cell_voltage_max = static_cast<uint16_t>(cmax);
-                (*pack)->_cell_voltage_avg = static_cast<uint16_t>(cavg);
-                (*pack)->_cell_voltage_spread = static_cast<uint16_t>(cdel);
-                (*pack)->_cell_temperature_max = static_cast<int16_t>(ctmp);
-                (*pack)->_current = static_cast<float>(pcur) / 10.0;
-                (*pack)->_voltage_total = static_cast<float>(pvol) / 1000.0;
-                (*pack)->_soc_level = static_cast<float>(psoc) / 10.0;
-                (*pack)->_power = static_cast<int16_t>((*pack)->_current * (*pack)->_voltage_total);
-                (*pack)->_lastUpdate = ms;
+                pack->_cell_voltage_min = static_cast<uint16_t>(cmin);
+                pack->_cell_voltage_max = static_cast<uint16_t>(cmax);
+                pack->_cell_voltage_avg = static_cast<uint16_t>(cavg);
+                pack->_cell_voltage_spread = static_cast<uint16_t>(cdel);
+                pack->_cell_temperature_max = static_cast<int16_t>(ctmp);
+                pack->_current = static_cast<float>(pcur) / 10.0;
+                pack->_voltage_total = static_cast<float>(pvol) / 1000.0;
+                pack->_soc_level = static_cast<float>(psoc) / 10.0;
+                pack->_power = static_cast<int16_t>(pack->_current * pack->_voltage_total);
+                pack->_lastUpdate = ms;
 
-                capacity_avail += (*pack)->_capacity_avail;
-                capacity += (*pack)->_capacity;
+                capacity_avail += pack->_capacity_avail;
+                capacity += pack->_capacity;
                 cellAvg += cavg;
-                power += (*pack)->_power;
+                power += pack->_power;
             }
 
             cellMin = min(cmin, cellMin);

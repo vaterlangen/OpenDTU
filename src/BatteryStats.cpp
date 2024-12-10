@@ -903,18 +903,18 @@ void VictronSmartShuntStats::mqttPublish() const {
     MqttSettings.publish("battery/midpointDeviation", String(_midpointDeviation));
 }
 
-std::optional<std::shared_ptr<ZendureBatteryStats::PackStats> > ZendureBatteryStats::getPackData(size_t index) const {
+std::shared_ptr<ZendureBatteryStats::PackStats> ZendureBatteryStats::getPackData(size_t index) const {
     try
     {
         return _packData.at(index);
     }
     catch(const std::out_of_range& ex)
     {
-        return std::nullopt;
+        return nullptr;
     }
 }
 
-std::optional<std::shared_ptr<ZendureBatteryStats::PackStats> > ZendureBatteryStats::addPackData(size_t index, String serial) {
+std::shared_ptr<ZendureBatteryStats::PackStats> ZendureBatteryStats::addPackData(size_t index, String serial) {
     std::shared_ptr<ZendureBatteryStats::PackStats> pack;
     try
     {
@@ -925,10 +925,9 @@ std::optional<std::shared_ptr<ZendureBatteryStats::PackStats> > ZendureBatterySt
     {
         pack = PackStats::fromSerial(serial);
 
-        if (pack == nullptr) {
-            return std::nullopt;
+        if (pack != nullptr) {
+            _packData[index] = pack;
         }
-        _packData[index] = pack;
     }
     return pack;
 }

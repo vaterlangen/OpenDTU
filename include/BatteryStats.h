@@ -481,8 +481,8 @@ class ZendureBatteryStats : public BatteryStats {
         bool supportsAlarmsAndWarnings() const final { return false; }
 
     protected:
-        std::optional<std::shared_ptr<ZendureBatteryStats::PackStats> > getPackData(size_t index) const;
-        std::optional<std::shared_ptr<ZendureBatteryStats::PackStats> > addPackData(size_t index, String serial);
+        std::shared_ptr<ZendureBatteryStats::PackStats> getPackData(size_t index) const;
+        std::shared_ptr<ZendureBatteryStats::PackStats> addPackData(size_t index, String serial);
 
         uint16_t getCapacity() const { return _capacity; };
         uint16_t getUseableCapacity() const { return _capacity_avail * (static_cast<float>(_soc_max - _soc_min) / 100.0); };
