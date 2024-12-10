@@ -372,7 +372,7 @@ class ZendureBatteryStats : public BatteryStats {
     };
 
     template <typename T>
-    static T stateToString(State state){
+    static T stateToString(State state) {
         switch (state) {
             case State::Idle:
                 return "idle";
@@ -385,7 +385,7 @@ class ZendureBatteryStats : public BatteryStats {
         }
     }
     template <typename T>
-    static T bypassModeToString(BypassMode state){
+    static T bypassModeToString(BypassMode state) {
         switch (state) {
             case BypassMode::Automatic:
                 return "automatic";
@@ -397,10 +397,10 @@ class ZendureBatteryStats : public BatteryStats {
                 return "invalid";
         }
     }
-    inline static bool isDischarging(State state){
+    inline static bool isDischarging(State state) {
         return state == State::Discharging;
     }
-    inline static bool isCharging(State state){
+    inline static bool isCharging(State state) {
         return state == State::Charging;
     }
 
@@ -411,7 +411,7 @@ class ZendureBatteryStats : public BatteryStats {
         public:
             PackStats() {}
             explicit PackStats(String serial) : _serial(serial) {}
-            virtual ~PackStats(){ }
+            virtual ~PackStats() {}
 
             String getSerial() const { return _serial; }
 
@@ -420,15 +420,15 @@ class ZendureBatteryStats : public BatteryStats {
             inline uint16_t getAvailableCapacity() const { return _capacity_avail; };
             inline String getName() const { return _name; }
 
-            static std::shared_ptr<PackStats> fromSerial(String serial){
+            static std::shared_ptr<PackStats> fromSerial(String serial) {
                 if (serial.length() == 15) {
-                    if (serial.startsWith("AO4H")){
+                    if (serial.startsWith("AO4H")) {
                         return std::make_shared<PackStats>(PackStats(serial, "AB1000", 960));
                     }
-                    if (serial.startsWith("CO4H")){
+                    if (serial.startsWith("CO4H")) {
                         return std::make_shared<PackStats>(PackStats(serial, "AB2000", 1920));
                     }
-                    if (serial.startsWith("R04Y")){
+                    if (serial.startsWith("R04Y")) {
                         return std::make_shared<PackStats>(PackStats(serial, "AIO2400", 2400));
                     }
                     return std::make_shared<PackStats>(PackStats(serial));
@@ -438,7 +438,7 @@ class ZendureBatteryStats : public BatteryStats {
 
         protected:
             explicit PackStats(String serial, String name, uint16_t capacity, uint8_t cellCount = 15) :
-                _serial(serial), _name(name), _capacity(capacity), _cellCount(cellCount){}
+                _serial(serial), _name(name), _capacity(capacity), _cellCount(cellCount) {}
             void setSerial(String serial) { _serial = serial; }
             void setHwVersion(String&& version) { _hwversion = std::move(version); }
             void setFwVersion(String&& version) { _fwversion = std::move(version); }
@@ -489,7 +489,7 @@ class ZendureBatteryStats : public BatteryStats {
 
     private:
         void setHwVersion(String&& version) {
-            if (!version.isEmpty()){
+            if (!version.isEmpty()) {
                 _hwversion = _device + " (" + std::move(version) + ")";
             }else{
                 _hwversion = _device;
@@ -501,7 +501,7 @@ class ZendureBatteryStats : public BatteryStats {
             _serial = serial;
         }
         void setSerial(std::optional<String> serial) {
-            if (serial.has_value()){
+            if (serial.has_value()) {
                 setSerial(*serial);
             }
         }

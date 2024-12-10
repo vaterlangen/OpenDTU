@@ -272,8 +272,8 @@ void MqttHandleBatteryHassClass::loop()
             // auto stats = std::reinterpret_pointer_cast<const ZendureBatteryStats>(Battery.getStats());
             // if (stats)
             // {
-            //     for (const auto& [i, value] : stats->getPackDataList()){
-            //         if (!value){
+            //     for (const auto& [i, value] : stats->getPackDataList()) {
+            //         if (!value) {
             //             continue;
             //         }
             //         auto id = String(i) + "/";

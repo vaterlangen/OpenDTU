@@ -914,7 +914,7 @@ std::optional<std::shared_ptr<ZendureBatteryStats::PackStats> > ZendureBatterySt
     }
 }
 
-std::optional<std::shared_ptr<ZendureBatteryStats::PackStats> > ZendureBatteryStats::addPackData(size_t index, String serial){
+std::optional<std::shared_ptr<ZendureBatteryStats::PackStats> > ZendureBatteryStats::addPackData(size_t index, String serial) {
     std::shared_ptr<ZendureBatteryStats::PackStats> pack;
     try
     {
@@ -925,7 +925,7 @@ std::optional<std::shared_ptr<ZendureBatteryStats::PackStats> > ZendureBatterySt
     {
         pack = PackStats::fromSerial(serial);
 
-        if (pack == nullptr){
+        if (pack == nullptr) {
             return std::nullopt;
         }
         _packData[index] = pack;
@@ -938,9 +938,9 @@ static void addLiveViewInSection(JsonVariant& root,
     std::string const& section, std::string const& name,
     const std::optional<T>& value, std::string const& unit, uint8_t precision, bool hideMissing = false)
 {
-    if (value.has_value()){
+    if (value.has_value()) {
         addLiveViewInSection(root, section, name, *value, unit, precision);
-    }else if (!hideMissing){
+    }else if (!hideMissing) {
         addLiveViewTextInSection(root, section, name, "unavail", true);
     }
 }
@@ -956,9 +956,9 @@ static void addLiveViewBooleanInSection(JsonVariant& root,
     std::string const& section, std::string const& name,
     std::optional<bool> value, bool translate = true, bool hideMissing = true)
 {
-    if (value.has_value()){
+    if (value.has_value()) {
         addLiveViewBooleanInSection(root, section, name, *value, translate);
-    }else if (!hideMissing){
+    }else if (!hideMissing) {
         addLiveViewTextInSection(root, section, name, "unavail", true);
     }
 }
@@ -968,7 +968,7 @@ void ZendureBatteryStats::getLiveViewData(JsonVariant& root) const {
 
     auto addRemainingTime = [this](auto root, auto section, const char* name, int16_t value, bool charge = false) {
         bool notInScope = charge ? !isCharging(this->_state) : !isDischarging(this->_state);
-        if (value < 0 || notInScope){
+        if (value < 0 || notInScope) {
             addLiveViewTextInSection(root, section, name, "unavail");
         }else{
             addLiveViewInSection(root, section, name, value, "min", 0);
@@ -1013,7 +1013,7 @@ void ZendureBatteryStats::getLiveViewData(JsonVariant& root) const {
 
     // pack data goes to dedicated cards of the web application
     char buff[30];
-    for (const auto& [index, value] : _packData){
+    for (const auto& [index, value] : _packData) {
         snprintf(buff, sizeof(buff), "_%s [%s]", value->getName().c_str(), value->getSerial().c_str());
         section = std::string(buff);
         addLiveViewTextInSection(root, section, "state", stateToString<std::string>(value->_state));
@@ -1049,7 +1049,7 @@ void ZendureBatteryStats::mqttPublish() const {
     MqttSettings.publish("battery/efficiency", String(_efficiency));
     MqttSettings.publish("battery/serial", _serial);
 
-    for (const auto& [index, value] : _packData){
+    for (const auto& [index, value] : _packData) {
         auto sn = String(index);
         MqttSettings.publish("battery/" + sn + "/cellMinMilliVolt", String(value->_cell_voltage_min));
         MqttSettings.publish("battery/" + sn + "/cellMaxMilliVolt", String(value->_cell_voltage_max));
@@ -1072,7 +1072,7 @@ void ZendureBatteryStats::mqttPublish() const {
     MqttSettings.publish("battery/outputPower", String(_output_power));
     MqttSettings.publish("battery/inputPower", String(_input_power));
     MqttSettings.publish("battery/bypass", String(static_cast<uint8_t>(_bypass_state)));
-    if (_last_full_charge_hours.has_value()){
+    if (_last_full_charge_hours.has_value()) {
         MqttSettings.publish("battery/lastFullCharge", String(*_last_full_charge_hours));
     }
 
