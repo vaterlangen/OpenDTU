@@ -22,6 +22,21 @@
 #define ZENDURE_LOG_SERIAL                          "sn"
 #define ZENDURE_LOG_PARAMS                          "params"
 
+/* Payload of log messages is not fully decrypted, yet
+ * It seems like different products and FW versions vari at least
+ * in number of elements. It's currently unkown, if existing entry
+ * may be updated between FW versions
+ *
+ * Following things are known so far:
+ *
+ * +---------+------------+--------------------+
+ * | Product | FW-Version | Number of Elements |
+ * +---------+------------+--------------------+
+ * | HUB1200 | v2.0.48    | 107                |
+ * +---------+------------+--------------------+
+ * | HUB2000 | v3.0.21    | 113                |
+ * +---------+------------+--------------------+
+ */
 #define ZENDURE_LOG_OFFSET_SOC                      0U                  // [%]
 #define ZENDURE_LOG_OFFSET_PACKNUM                  1U                  // [1]
 #define ZENDURE_LOG_OFFSET_PACK_SOC(pack)           (2U+(pack)-1U)      // [d%]
@@ -86,6 +101,27 @@
 #define ZENDURE_LOG_OFFSET_UNKOWN_49                91U                 // ? => always 0
 #define ZENDURE_LOG_OFFSET_UNKOWN_50                92U                 // ? => always 0
 #define ZENDURE_LOG_OFFSET_UNKOWN_51                93U                 // ? => always 0
+#define ZENDURE_LOG_OFFSET_UNKOWN_52                94U                 // ? => always 0
+#define ZENDURE_LOG_OFFSET_UNKOWN_53                95U                 // ? => always 0
+#define ZENDURE_LOG_OFFSET_UNKOWN_54                96U                 // ? => always 0
+#define ZENDURE_LOG_OFFSET_UNKOWN_55                97U                 // ? => always 0
+#define ZENDURE_LOG_OFFSET_UNKOWN_56                98U                 // ? => always 0
+#define ZENDURE_LOG_OFFSET_UNKOWN_57                99U                 // ? => always 20.000
+#define ZENDURE_LOG_OFFSET_UNKOWN_58                100U                // ? => always 100
+#define ZENDURE_LOG_OFFSET_UNKOWN_59                101U                // ? => always 0
+#define ZENDURE_LOG_OFFSET_UNKOWN_60                102U                // ? => always 0
+#define ZENDURE_LOG_OFFSET_UNKOWN_61                103U                // ? => always 0
+#define ZENDURE_LOG_OFFSET_UNKOWN_62                104U                // ? => always 0
+#define ZENDURE_LOG_OFFSET_UNKOWN_63                105U                // ? => always 0
+#define ZENDURE_LOG_OFFSET_UNKOWN_64                106U                // ? => always 0
+#define ZENDURE_LOG_OFFSET_UNKOWN_65                107U                // ? => always 255 (?)
+#define ZENDURE_LOG_OFFSET_UNKOWN_66                108U                // ? => always 0
+#define ZENDURE_LOG_OFFSET_UNKOWN_67                109U                // ? => always 0
+#define ZENDURE_LOG_OFFSET_UNKOWN_68                110U                // ? => always 0
+#define ZENDURE_LOG_OFFSET_UNKOWN_69                111U                // ? => always 0
+#define ZENDURE_LOG_OFFSET_UNKOWN_70                112U                // ? => always 0
+
+
 
 #define ZENDURE_REPORT_PROPERTIES                   "properties"
 #define ZENDURE_REPORT_MIN_SOC                      "minSoc"
@@ -111,6 +147,7 @@
 #define ZENDURE_REPORT_AC_MODE                      "acMode"
 #define ZENDURE_REPORT_INPUT_MODE                   "inputMode"
 
+// momentary values - may not sum up correctly!
 #define ZENDURE_REPORT_SOLAR_POWER_MPPT(x)          "solarPower"##x
 #define ZENDURE_REPORT_SOLAR_INPUT_POWER            "solarInputPower"
 #define ZENDURE_REPORT_GRID_INPUT_POWER             "gridInputPower"    // Hyper2000/Ace1500 only - need to check
@@ -120,6 +157,11 @@
 #define ZENDURE_REPORT_DC_OUTPUT_POWER              "dcOutputPower"     // Ace1500 only - need to check
 #define ZENDURE_REPORT_AC_OUTPUT_POWER              "acOutputPower"     // Hyper2000 only - need to check
 
+// values smoothend over some given time frame - may be more accurate?
+#define ZENDURE_REPORT_SOLAR_POWER_MPPT_CYCLE(x)    "solarPower"##x##"Cycle"
+#define ZENDURE_REPORT_DISCHARGE_POWER_CYCLE        "packInputPowerCycle"
+#define ZENDURE_REPORT_OUTPUT_POWER_CYCLE           "outputHomePowerCycle"
+
 #define ZENDURE_REPORT_SMART_MODE                   "smartMode"
 #define ZENDURE_REPORT_SMART_POWER                  "smartPower"
 #define ZENDURE_REPORT_GRID_POWER                   "gridPower"
@@ -128,8 +170,8 @@
 #define ZENDURE_REPORT_AC_SWITCH                    "acSwitch"          // Hyper2000/Ace1500 only - need to check
 #define ZENDURE_REPORT_DC_SWITCH                    "dcSwitch"          // Ace1500 only - need to check
 
-
-
+#define ZENDURE_REPORT_EXIT_PASS_TIME               "exitPassTime"      // seems to be statically set to 360
+#define ZENDURE_REPORT_LOCAL_STATE                  "localState"        // always 0
 
 #define ZENDURE_REPORT_PACK_DATE                    "packData"
 #define ZENDURE_REPORT_PACK_SERIAL                  "sn"
