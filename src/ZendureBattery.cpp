@@ -352,18 +352,17 @@ uint16_t ZendureBattery::setOutputLimit(uint16_t limit) const
         return _stats->_output_limit;
     }
 
+    // force valid limit and ensure fixed output is always dominant
+    if (config.Battery.ZendureOutputControl == ZendureBatteryOutputControl::ControlFixed) {
+        limit = config.Battery.ZendureOutputLimit;
+    } else {
+        limit = min(config.Battery.ZendureMaxOutput, limit);
+    }
+
     // enforce output limit during charge through
     if (_stats->_charge_through_state.value_or(false)) {
         limit = 0;
     }
-
-    // force static limit
-    if (config.Battery.ZendureOutputControl == ZendureBatteryOutputControl::ControlFixed) {
-        limit = config.Battery.ZendureOutputLimit;
-    }
-
-    // force limit below max inverter limit
-    limit = min(config.Battery.ZendureMaxOutput, limit);
 
     if (_stats->_output_limit != limit) {
         limit = calcOutputLimit(limit);
