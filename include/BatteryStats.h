@@ -349,8 +349,6 @@ class MqttBatteryStats : public BatteryStats {
         // we do NOT publish the same data under a different topic.
         void mqttPublish() const final { }
 
-        void getLiveViewData(JsonVariant& root) const final;
-
         bool supportsAlarmsAndWarnings() const final { return false; }
 };
 

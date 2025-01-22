@@ -5,16 +5,17 @@ export interface DynamicPowerLimiter {
     PLLIMIT: number;
 }
 
-export interface Vedirect {
+export interface SolarCharger {
     full_update: boolean;
-    instances: { [key: string]: VedirectInstance };
+    instances: { [key: string]: SolarChargerInstance };
 }
 
 type MpptData = (ValueObject | string)[];
 
-export interface VedirectInstance {
+export interface SolarChargerInstance {
     data_age_ms: number;
     product_id: string;
-    firmware_version: string;
+    firmware_version?: string;
+    hide_serial: boolean;
     values: { [key: string]: MpptData };
 }

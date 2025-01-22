@@ -3,11 +3,9 @@
  * Copyright (C) 2022-2024 Thomas Basler and others
  */
 #include "WebApi_powermeter.h"
-#include "VeDirectFrameHandler.h"
 #include "ArduinoJson.h"
 #include "AsyncJson.h"
 #include "Configuration.h"
-#include "MqttHandleVedirectHass.h"
 #include "MqttHandleHass.h"
 #include "MqttSettings.h"
 #include "PowerLimiter.h"

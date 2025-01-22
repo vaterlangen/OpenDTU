@@ -10,7 +10,7 @@
 
 #define CONFIG_FILENAME "/config.json"
 #define CONFIG_VERSION 0x00011d00 // 0.1.29 // make sure to clean all after change
-#define CONFIG_VERSION_ONBATTERY 2
+#define CONFIG_VERSION_ONBATTERY 4
 
 #define WIFI_MAX_SSID_STRLEN 32
 #define WIFI_MAX_PASSWORD_STRLEN 64
@@ -29,6 +29,7 @@
 #define MQTT_MAX_TOPIC_STRLEN 256
 #define MQTT_MAX_LWTVALUE_STRLEN 20
 #define MQTT_MAX_CERT_STRLEN 2560
+#define MQTT_MAX_JSON_PATH_STRLEN 256
 
 #define INV_MAX_NAME_STRLEN 31
 #define INV_MAX_COUNT 10
@@ -47,8 +48,6 @@
 
 #define POWERMETER_MQTT_MAX_VALUES 3
 #define POWERMETER_HTTP_JSON_MAX_VALUES 3
-#define POWERMETER_HTTP_JSON_MAX_PATH_STRLEN 256
-#define BATTERY_JSON_MAX_PATH_STRLEN 128
 
 #define ZENDURE_MAX_SERIAL_STRLEN 8
 
@@ -90,7 +89,7 @@ using HttpRequestConfig = struct HTTP_REQUEST_CONFIG_T;
 
 struct POWERMETER_MQTT_VALUE_T {
     char Topic[MQTT_MAX_TOPIC_STRLEN + 1];
-    char JsonPath[POWERMETER_HTTP_JSON_MAX_PATH_STRLEN + 1];
+    char JsonPath[MQTT_MAX_JSON_PATH_STRLEN + 1];
 
     enum Unit { Watts = 0, MilliWatts = 1, KiloWatts = 2 };
     Unit PowerUnit;
@@ -113,7 +112,7 @@ using PowerMeterSerialSdmConfig = struct POWERMETER_SERIAL_SDM_CONFIG_T;
 struct POWERMETER_HTTP_JSON_VALUE_T {
     HttpRequestConfig HttpRequest;
     bool Enabled;
-    char JsonPath[POWERMETER_HTTP_JSON_MAX_PATH_STRLEN + 1];
+    char JsonPath[MQTT_MAX_JSON_PATH_STRLEN + 1];
 
     enum Unit { Watts = 0, MilliWatts = 1, KiloWatts = 2 };
     Unit PowerUnit;
@@ -140,9 +139,10 @@ struct POWERLIMITER_INVERTER_CONFIG_T {
     bool IsGoverned;
     bool IsBehindPowerMeter;
     bool IsSolarPowered;
-    bool UseOverscalingToCompensateShading;
+    bool UseOverscaling;
     uint16_t LowerPowerLimit;
     uint16_t UpperPowerLimit;
+    uint8_t ScalingThreshold;
 };
 using PowerLimiterInverterConfig = struct POWERLIMITER_INVERTER_CONFIG_T;
 
@@ -185,9 +185,9 @@ struct BATTERY_CONFIG_T {
     uint8_t JkBmsInterface;
     uint8_t JkBmsPollingInterval;
     char MqttSocTopic[MQTT_MAX_TOPIC_STRLEN + 1];
-    char MqttSocJsonPath[BATTERY_JSON_MAX_PATH_STRLEN + 1];
+    char MqttSocJsonPath[MQTT_MAX_JSON_PATH_STRLEN + 1];
     char MqttVoltageTopic[MQTT_MAX_TOPIC_STRLEN + 1];
-    char MqttVoltageJsonPath[BATTERY_JSON_MAX_PATH_STRLEN + 1];
+    char MqttVoltageJsonPath[MQTT_MAX_JSON_PATH_STRLEN + 1];
     BatteryVoltageUnit MqttVoltageUnit;
     bool EnableDischargeCurrentLimit;
     float DischargeCurrentLimit;
@@ -195,7 +195,7 @@ struct BATTERY_CONFIG_T {
     float DischargeCurrentLimitBelowVoltage;
     bool UseBatteryReportedDischargeCurrentLimit;
     char MqttDischargeCurrentTopic[MQTT_MAX_TOPIC_STRLEN + 1];
-    char MqttDischargeCurrentJsonPath[BATTERY_JSON_MAX_PATH_STRLEN + 1];
+    char MqttDischargeCurrentJsonPath[MQTT_MAX_JSON_PATH_STRLEN + 1];
     BatteryAmperageUnit MqttAmperageUnit;
     uint8_t ZendureDeviceType;
     char ZendureDeviceId[ZENDURE_MAX_SERIAL_STRLEN + 1];
@@ -215,6 +215,56 @@ struct BATTERY_CONFIG_T {
     uint16_t ZendureChargeThroughInterval;
 };
 using BatteryConfig = struct BATTERY_CONFIG_T;
+
+enum GridChargerHardwareInterface { MCP2515 = 0, TWAI = 1 };
+
+struct GRID_CHARGER_CONFIG_T {
+    bool Enabled;
+    bool VerboseLogging;
+    GridChargerHardwareInterface HardwareInterface;
+    uint32_t CAN_Controller_Frequency;
+    bool Auto_Power_Enabled;
+    bool Auto_Power_BatterySoC_Limits_Enabled;
+    bool Emergency_Charge_Enabled;
+    float Auto_Power_Voltage_Limit;
+    float Auto_Power_Enable_Voltage_Limit;
+    float Auto_Power_Lower_Power_Limit;
+    float Auto_Power_Upper_Power_Limit;
+    uint8_t Auto_Power_Stop_BatterySoC_Threshold;
+    float Auto_Power_Target_Power_Consumption;
+};
+using GridChargerConfig = struct GRID_CHARGER_CONFIG_T;
+
+enum SolarChargerProviderType { VEDIRECT = 0, MQTT = 1 };
+
+struct SOLARCHARGER_MQTT_CONFIG_T {
+    bool CalculateOutputPower;
+
+    enum WattageUnit { KiloWatts = 0, Watts = 1, MilliWatts = 2 };
+    char PowerTopic[MQTT_MAX_TOPIC_STRLEN + 1];
+    char PowerJsonPath[MQTT_MAX_JSON_PATH_STRLEN + 1];
+    WattageUnit PowerUnit;
+
+    enum VoltageUnit { Volts = 0, DeciVolts = 1, CentiVolts = 2, MilliVolts = 3 };
+    char VoltageTopic[MQTT_MAX_TOPIC_STRLEN + 1];
+    char VoltageJsonPath[MQTT_MAX_JSON_PATH_STRLEN + 1];
+    VoltageUnit VoltageTopicUnit;
+
+    enum AmperageUnit { Amps = 0, MilliAmps = 1 };
+    char CurrentTopic[MQTT_MAX_TOPIC_STRLEN + 1];
+    char CurrentJsonPath[MQTT_MAX_JSON_PATH_STRLEN + 1];
+    AmperageUnit CurrentUnit;
+};
+using SolarChargerMqttConfig = struct SOLARCHARGER_MQTT_CONFIG_T;
+
+struct SOLAR_CHARGER_CONFIG_T {
+    bool Enabled;
+    bool VerboseLogging;
+    bool PublishUpdatesOnly;
+    SolarChargerProviderType Provider;
+    SolarChargerMqttConfig Mqtt;
+};
+using SolarChargerConfig = struct SOLAR_CHARGER_CONFIG_T;
 
 struct CONFIG_T {
     struct {
@@ -327,11 +377,7 @@ struct CONFIG_T {
         uint8_t Brightness;
     } Led_Single[PINMAPPING_LED_COUNT];
 
-    struct {
-        bool Enabled;
-        bool VerboseLogging;
-        bool UpdatesOnly;
-    } Vedirect;
+    SolarChargerConfig SolarCharger;
 
     struct PowerMeterConfig {
         bool Enabled;
@@ -347,21 +393,7 @@ struct CONFIG_T {
 
     BatteryConfig Battery;
 
-    struct {
-        bool Enabled;
-        bool VerboseLogging;
-        uint32_t CAN_Controller_Frequency;
-        bool Auto_Power_Enabled;
-        bool Auto_Power_BatterySoC_Limits_Enabled;
-        bool Emergency_Charge_Enabled;
-        float Auto_Power_Voltage_Limit;
-        float Auto_Power_Enable_Voltage_Limit;
-        float Auto_Power_Lower_Power_Limit;
-        float Auto_Power_Upper_Power_Limit;
-        uint8_t Auto_Power_Stop_BatterySoC_Threshold;
-        float Auto_Power_Target_Power_Consumption;
-    } Huawei;
-
+    GridChargerConfig Huawei;
 
     INVERTER_CONFIG_T Inverter[INV_MAX_COUNT];
     char Dev_PinMapping[DEV_MAX_MAPPING_NAME_STRLEN + 1];
@@ -393,23 +425,30 @@ public:
     void deleteInverterById(const uint8_t id);
 
     static void serializeHttpRequestConfig(HttpRequestConfig const& source, JsonObject& target);
+    static void serializeSolarChargerConfig(SolarChargerConfig const& source, JsonObject& target);
+    static void serializeSolarChargerMqttConfig(SolarChargerMqttConfig const& source, JsonObject& target);
     static void serializePowerMeterMqttConfig(PowerMeterMqttConfig const& source, JsonObject& target);
     static void serializePowerMeterSerialSdmConfig(PowerMeterSerialSdmConfig const& source, JsonObject& target);
     static void serializePowerMeterHttpJsonConfig(PowerMeterHttpJsonConfig const& source, JsonObject& target);
     static void serializePowerMeterHttpSmlConfig(PowerMeterHttpSmlConfig const& source, JsonObject& target);
     static void serializeBatteryConfig(BatteryConfig const& source, JsonObject& target);
     static void serializePowerLimiterConfig(PowerLimiterConfig const& source, JsonObject& target);
+    static void serializeGridChargerConfig(GridChargerConfig const& source, JsonObject& target);
 
     static void deserializeHttpRequestConfig(JsonObject const& source_http_config, HttpRequestConfig& target);
+    static void deserializeSolarChargerConfig(JsonObject const& source, SolarChargerConfig& target);
+    static void deserializeSolarChargerMqttConfig(JsonObject const& source, SolarChargerMqttConfig& target);
     static void deserializePowerMeterMqttConfig(JsonObject const& source, PowerMeterMqttConfig& target);
     static void deserializePowerMeterSerialSdmConfig(JsonObject const& source, PowerMeterSerialSdmConfig& target);
     static void deserializePowerMeterHttpJsonConfig(JsonObject const& source, PowerMeterHttpJsonConfig& target);
     static void deserializePowerMeterHttpSmlConfig(JsonObject const& source, PowerMeterHttpSmlConfig& target);
     static void deserializeBatteryConfig(JsonObject const& source, BatteryConfig& target);
     static void deserializePowerLimiterConfig(JsonObject const& source, PowerLimiterConfig& target);
+    static void deserializeGridChargerConfig(JsonObject const& source, GridChargerConfig& target);
 
 private:
     void loop();
+    static double roundedFloat(float val);
 
     Task _loopTask;
 };
