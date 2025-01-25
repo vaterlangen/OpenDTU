@@ -38,7 +38,7 @@ void Provider::loop()
 {
     VeDirectShunt.loop();
 
-    if (VeDirectShunt.getLastUpdate() <= _lastUpdate) { return; }
+    if (VeDirectShunt.getLastUpdate() == _lastUpdate) { return; }
 
     _stats->updateFrom(VeDirectShunt.getData());
     _lastUpdate = VeDirectShunt.getLastUpdate();

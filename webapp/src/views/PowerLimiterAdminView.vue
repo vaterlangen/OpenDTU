@@ -129,11 +129,26 @@
                         />
 
                         <InputElement
-                            v-if="powerLimiterConfigList.inverters[idx].is_solar_powered"
-                            :label="$t('powerlimiteradmin.UseOverscalingToCompensateShading')"
-                            :tooltip="$t('powerlimiteradmin.UseOverscalingToCompensateShadingHint')"
+                            v-if="
+                                powerLimiterConfigList.inverters[idx].is_solar_powered &&
+                                inverterSupportsOverscaling(inv.serial)
+                            "
+                            :label="$t('powerlimiteradmin.UseOverscaling')"
+                            :tooltip="$t('powerlimiteradmin.UseOverscalingHint')"
                             v-model="powerLimiterConfigList.inverters[idx].use_overscaling_to_compensate_shading"
                             type="checkbox"
+                            wide
+                        />
+
+                        <InputElement
+                            v-if="powerLimiterConfigList.inverters[idx].use_overscaling_to_compensate_shading"
+                            :label="$t('powerlimiteradmin.ScalingPowerThreshold')"
+                            v-model="powerLimiterConfigList.inverters[idx].scaling_threshold"
+                            :tooltip="$t('powerlimiteradmin.ScalingPowerThresholdHint')"
+                            :min="(0).toString()"
+                            :max="(100).toString()"
+                            postfix="%"
+                            type="number"
                             wide
                         />
 
@@ -590,6 +605,20 @@ export default defineComponent({
             }
             return inv.name + ' (' + inv.type + ')';
         },
+        inverterSupportsOverscaling(serial: string) {
+            if (serial === undefined) {
+                return false;
+            }
+            const meta = this.powerLimiterMetaData;
+            if (meta === undefined) {
+                return false;
+            }
+            const inv = this.getInverterInfo(serial);
+            if (inv === undefined) {
+                return false;
+            }
+            return inv.pdl_supported === false;
+        },
         needsChannelSelection() {
             const cfg = this.powerLimiterConfigList;
 
@@ -660,6 +689,8 @@ export default defineComponent({
                 newInv.is_behind_power_meter = true;
                 newInv.lower_power_limit = this.getLowerLimitMinimum(newInv);
                 newInv.upper_power_limit = Math.max(metaInv.max_power, 300);
+                newInv.use_overscaling_to_compensate_shading = false;
+                newInv.scaling_threshold = 98;
                 inverters.push(newInv);
             }
 
