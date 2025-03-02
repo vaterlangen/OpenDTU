@@ -214,7 +214,15 @@
             "MaximumPowerToday": "Maximum power today",
             "MaximumPowerYesterday": "Maximum power yesterday"
         },
-        "PowerLimiterState": "Power limiter state [off (charging), solar passthrough, on battery]"
+        "PowerLimiterState": "Power limiter state [off (charging), solar passthrough, on battery]",
+        "section_mppt1": "SmartBufferBattery - MPPT 1",
+        "section_mppt2": "SmartBufferBattery - MPPT 2",
+        "mppt1": {
+            "Power": "Power"
+        },
+        "mppt2": {
+            "Power": "Power"
+        }
     },
     "eventlog": {
         "Start": "Start",
@@ -601,6 +609,7 @@
         "Provider": "Data Provider",
         "ProviderVeDirect": "Victron MPPT(s) using VE.Direct interface",
         "ProviderMqtt": "Solar Charger data from MQTT broker",
+        "ProviderSmartBufferBattery": "MPPT data from Smart Buffer Batteries",
         "VerboseLogging": "@:base.VerboseLogging",
         "MqttPublishUpdatesOnly": "Publish values to MQTT only when they change",
         "CalculateOutputPower": "Calculate Solar Charger output power",

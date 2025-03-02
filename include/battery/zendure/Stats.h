@@ -2,6 +2,8 @@
 #pragma once
 
 #include <battery/Stats.h>
+#include <solarcharger/Controller.h>
+#include <solarcharger/smartbufferbatteries/Provider.h>
 #include <map>
 
 namespace Batteries::Zendure {
@@ -101,18 +103,27 @@ private:
         _device = std::move(device);
     }
 
-    inline void updateSolarInputPower() {
+    inline void updateSolarInputPower(const size_t num, const float power) {
         _input_power = _solar_power_1 + _solar_power_2;
+
+        auto mppt = SolarCharger.getSmartBufferBatteryStats();
+        if (mppt == nullptr) {
+            return;
+        }
+        if (!_solarcharger_id.has_value()) {
+            _solarcharger_id = mppt->addDevice(*getManufacturer(), _device, 2);
+        }
+        mppt->setMpptPower(*_solarcharger_id, num, static_cast<float>(power), millis());
     }
 
     inline void setSolarPower1(const uint16_t power) {
         _solar_power_1 = power;
-        updateSolarInputPower();
+        updateSolarInputPower(1, power);
     }
 
     inline void setSolarPower2(const uint16_t power) {
         _solar_power_2 = power;
-        updateSolarInputPower();
+        updateSolarInputPower(2, power);
     }
 
     void setChargePower(const uint16_t power) {
@@ -142,6 +153,8 @@ private:
     String _device = String("Unkown");
 
     std::map<size_t, std::shared_ptr<PackStats>> _packData = std::map<size_t, std::shared_ptr<PackStats> >();
+
+    std::optional<uint32_t> _solarcharger_id = std::nullopt;
 
     int16_t _cellTemperature = 0;
     uint16_t _cellMinMilliVolt = 0;
