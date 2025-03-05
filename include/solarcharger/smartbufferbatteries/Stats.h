@@ -17,7 +17,7 @@ public:
     uint32_t getAgeMillis() const final { return millis() - _lastUpdate; }
 
     std::optional<float> getOutputPowerWatts() const final;
-    std::optional<float> getOutputVoltage() const { return std::nullopt; }
+    std::optional<float> getOutputVoltage() const;
     std::optional<uint16_t> getPanelPowerWatts() const { return getOutputPowerWatts(); }
     std::optional<float> getYieldTotal() const { return std::nullopt; }
     std::optional<float> getYieldDay() const { return std::nullopt; }
@@ -36,20 +36,14 @@ public:
     // ToDo @vaterlangen: rework battery interface for pushing updates
     uint32_t addDevice(const String& name, const String& manufacture, const size_t numMppts);
     void setMpptPower(const uint32_t id, const size_t num, const float power, const uint32_t updated);
-
-protected:
-    // void setManufacture(const std::optional<String>& manufacture) { _manufacture = manufacture; }
-    // void setDevice(const std::optional<String>& device) { _device = device; }
-    //void setOutputPowerWatts(const size_t index, const float powerWatts, const uint32_t lastUpdate);
+    void setMpptVoltage(const uint32_t id, const size_t num, const float voltage, const uint32_t lastUpdate);
 
 private:
     uint32_t _lastUpdate = 0;
     uint32_t _nextIndex = 1;
 
     uint32_t _lastUpdateOutputPowerWatts = 0;
-
-    std::optional<String> _manufacture = std::nullopt;
-    std::optional<String> _device = std::nullopt;
+    uint32_t _lastUpdateOutputVoltage = 0;
 
     std::optional<float> getValueIfNotOutdated(const uint32_t lastUpdate, const float value) const;
 
@@ -62,7 +56,7 @@ public:
     DeviceData(const String& manufacture, const String& device, const size_t numMppts = 0);
 
 private:
-    void setMpptData(const size_t num, const float power, const uint32_t lastUpdate);
+    void setMpptData(const size_t num, const uint32_t lastUpdate, const std::optional<float> power = std::nullopt, std::optional<float> voltage = std::nullopt);
 
     uint32_t _lastUpdate = 0;
     String _manufacture;
@@ -79,6 +73,7 @@ class MpptData {
 private:
     uint32_t _lastUpdate = 0;
     float _power;
+    float _voltage;
 };
 
 

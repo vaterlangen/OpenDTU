@@ -16,6 +16,22 @@ std::optional<float> Stats::getOutputPowerWatts() const
     return getValueIfNotOutdated(_lastUpdateOutputPowerWatts, sum);
 }
 
+std::optional<float> Stats::getOutputVoltage() const
+{
+    float minimum = INFINITY;
+    for (const auto& [key, device] : _deviceData) {
+        for (const auto& [num, mppt] : device->_mpptData) {
+            minimum = min(minimum, mppt->_voltage);
+        }
+    }
+
+    if (minimum == INFINITY) {
+        return std::nullopt;
+    }
+
+    return getValueIfNotOutdated(_lastUpdateOutputVoltage, minimum);
+}
+
 std::optional<float> Stats::getValueIfNotOutdated(const uint32_t lastUpdate, const float value) const {
     // never updated or older than 60 seconds
     if (lastUpdate == 0
@@ -50,7 +66,25 @@ void Stats::getLiveViewData(JsonVariant& root, const boolean fullUpdate, const u
             output["Power"]["v"] = mpptData->_power;
             output["Power"]["u"] = "W";
             output["Power"]["d"] = 1;
+            output["Voltage"]["v"] = mpptData->_voltage;
+            output["Voltage"]["u"] = "V";
+            output["Voltage"]["d"] = 1;
         }
+    }
+}
+
+void Stats::setMpptVoltage(const uint32_t id, const size_t num, const float voltage, const uint32_t lastUpdate) {
+    std::shared_ptr<DeviceData> device;
+    try
+    {
+        device = _deviceData.at(id);
+        device->setMpptData(num, lastUpdate, std::nullopt, voltage);
+        _lastUpdate = lastUpdate;
+        _lastUpdateOutputVoltage = lastUpdate;
+    }
+    catch(const std::out_of_range& ex)
+    {
+        return;
     }
 }
 
@@ -59,7 +93,7 @@ void Stats::setMpptPower(const uint32_t id, const size_t num, const float power,
     try
     {
         device = _deviceData.at(id);
-        device->setMpptData(num, power, lastUpdate);
+        device->setMpptData(num, lastUpdate, power, std::nullopt);
         _lastUpdate = lastUpdate;
         _lastUpdateOutputPowerWatts = lastUpdate;
     }
@@ -75,8 +109,12 @@ DeviceData::DeviceData(const String& manufacture, const String& device, const si
     , _numMppts(numMppts) { }
 
 
-void DeviceData::setMpptData(const size_t num, const float power, const uint32_t lastUpdate) {
+void DeviceData::setMpptData(const size_t num, const uint32_t lastUpdate, const std::optional<float> power, std::optional<float> voltage) {
     if (num == 0 || num > _numMppts) {
+        return;
+    }
+
+    if (!power && !voltage) {
         return;
     }
 
@@ -93,7 +131,15 @@ void DeviceData::setMpptData(const size_t num, const float power, const uint32_t
 
     _lastUpdate = lastUpdate;
     mppt->_lastUpdate = lastUpdate;
-    mppt->_power = power;
+
+    if (power.has_value()) {
+        mppt->_power = *power;
+    }
+
+    if (voltage.has_value()) {
+        mppt->_voltage = *voltage;
+    }
+
 }
 
 uint32_t Stats::addDevice(const String& manufacture, const String& name, const size_t numMppts) {

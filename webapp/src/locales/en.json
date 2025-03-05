@@ -215,13 +215,15 @@
             "MaximumPowerYesterday": "Maximum power yesterday"
         },
         "PowerLimiterState": "Power limiter state [off (charging), solar passthrough, on battery]",
-        "section_mppt1": "SmartBufferBattery - MPPT 1",
-        "section_mppt2": "SmartBufferBattery - MPPT 2",
+        "section_mppt1": "Solar Input 1",
+        "section_mppt2": "Solar Input 2",
         "mppt1": {
-            "Power": "Power"
+            "Power": "Power",
+            "Voltage": "Voltage"
         },
         "mppt2": {
-            "Power": "Power"
+            "Power": "@:solarchargerhome.mppt1.Power",
+            "Voltage": "@:solarchargerhome.mppt1.Voltage"
         }
     },
     "eventlog": {
@@ -1158,8 +1160,6 @@
         "midpointVoltage": "Midpoint Voltage",
         "midpointDeviation": "Midpoint Deviation",
         "lastFullCharge": "Last full Charge",
-        "solarInputPower1": "MPPT1 power",
-        "solarInputPower2": "MPPT2 power",
         "totalInputPower": "Total input power",
         "chargePower": "Charge power",
         "dischargePower": "Discharge power",
@@ -1187,12 +1187,12 @@
         "alwaysoff": "Always Off",
         "alwayson": "Always On",
         "efficiency": "Efficiency",
-        "panels": "Solar input",
         "settings": "Settings",
         "remainOutTime": "Remaining discharge time",
         "remainInTime": "Remaining charge time",
         "unavail": "N/A",
         "useableCapacity": "Useable capacity",
-        "chargethrough": "Charge through"
+        "chargethrough": "Charge through",
+        "outputVoltage": "Output voltage"
     }
 }
