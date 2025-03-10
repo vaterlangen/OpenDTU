@@ -8,12 +8,18 @@ namespace SolarChargers::SmartBufferBatteries {
 std::optional<float> Stats::getOutputPowerWatts() const
 {
     float sum = 0;
+    bool updated = false;
     for (const auto& [key, device] : _deviceData) {
         for (const auto& [num, mppt] : device->_mpptData) {
+            if (!getValueIfNotOutdated(mppt->_lastUpdate, mppt->_power).has_value()) {
+                continue;
+            }
             sum += mppt->_power;
+            updated = true;
         }
     }
-    return getValueIfNotOutdated(_lastUpdateOutputPowerWatts, sum);
+
+    return updated ? std::optional<float>(sum) : std::nullopt;
 }
 
 std::optional<float> Stats::getOutputVoltage() const
@@ -21,6 +27,9 @@ std::optional<float> Stats::getOutputVoltage() const
     float minimum = INFINITY;
     for (const auto& [key, device] : _deviceData) {
         for (const auto& [num, mppt] : device->_mpptData) {
+            if (!getValueIfNotOutdated(mppt->_lastUpdate, mppt->_voltage).has_value()) {
+                continue;
+            }
             minimum = min(minimum, mppt->_voltage);
         }
     }
@@ -29,7 +38,7 @@ std::optional<float> Stats::getOutputVoltage() const
         return std::nullopt;
     }
 
-    return getValueIfNotOutdated(_lastUpdateOutputVoltage, minimum);
+    return std::optional<float>(minimum);
 }
 
 std::optional<float> Stats::getValueIfNotOutdated(const uint32_t lastUpdate, const float value) const {
@@ -55,9 +64,9 @@ void Stats::getLiveViewData(JsonVariant& root, const boolean fullUpdate, const u
         auto dev = deviceData->_manufacture + " " + deviceData->_device;
         auto devage = millis() - deviceData->_lastUpdate;
 
-        const JsonObject instance = root["solarcharger"]["instances"][dev.c_str()].to<JsonObject>();
+        const JsonObject instance = root["solarcharger"]["instances"][deviceData->_serial].to<JsonObject>();
         instance["data_age_ms"] = devage;
-        instance["hide_serial"] = true;
+        instance["hide_serial"] = false;
         instance["product_id"] = dev;
 
         for (const auto& [mppt, mpptData] : deviceData->_mpptData) {
@@ -103,9 +112,10 @@ void Stats::setMpptPower(const uint32_t id, const size_t num, const float power,
     }
 }
 
-DeviceData::DeviceData(const String& manufacture, const String& device, const size_t numMppts /* = 0 */)
+DeviceData::DeviceData(const String& manufacture, const String& device, const String& serial, const size_t numMppts /* = 0 */)
     : _manufacture(manufacture)
     , _device(device)
+    , _serial(serial)
     , _numMppts(numMppts) { }
 
 
@@ -142,10 +152,29 @@ void DeviceData::setMpptData(const size_t num, const uint32_t lastUpdate, const 
 
 }
 
-uint32_t Stats::addDevice(const String& manufacture, const String& name, const size_t numMppts) {
-    _deviceData[_nextIndex] = std::make_shared<DeviceData>(manufacture, name, numMppts);
+uint32_t Stats::addDevice(const String& manufacture, const String& device, const String& serial, const size_t numMppts) {
+    // try to find existing entry
+    for (const auto& [key, d] : _deviceData) {
+        if (d->_serial == serial) {
+            return key;
+        }
+    }
+
+    // otherwise add new one
+    _deviceData[_nextIndex] = std::make_shared<DeviceData>(manufacture, device, serial, numMppts);
 
     return _nextIndex++;
+}
+
+bool Stats::verifyDevice(const uint32_t id, const String& serial) {
+    try
+    {
+        return _deviceData.at(id)->_serial == serial;
+    }
+    catch(const std::out_of_range& ex)
+    {
+        return false;
+    }
 }
 
 }; // namespace SolarChargers::SmartBufferBatteries

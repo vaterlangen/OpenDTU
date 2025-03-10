@@ -34,7 +34,8 @@ public:
     void mqttPublishSensors(const boolean forcePublish) const final {}
 
     // ToDo @vaterlangen: rework battery interface for pushing updates
-    uint32_t addDevice(const String& name, const String& manufacture, const size_t numMppts);
+    uint32_t addDevice(const String& manufacture, const String& device, const String& serial, const size_t numMppts);
+    bool verifyDevice(const uint32_t id, const String& serial);
     void setMpptPower(const uint32_t id, const size_t num, const float power, const uint32_t updated);
     void setMpptVoltage(const uint32_t id, const size_t num, const float voltage, const uint32_t lastUpdate);
 
@@ -53,7 +54,7 @@ class DeviceData {
     friend class Stats;
 
 public:
-    DeviceData(const String& manufacture, const String& device, const size_t numMppts = 0);
+    DeviceData(const String& manufacture, const String& device, const String& serial, const size_t numMppts = 0);
 
 private:
     void setMpptData(const size_t num, const uint32_t lastUpdate, const std::optional<float> power = std::nullopt, std::optional<float> voltage = std::nullopt);
@@ -61,6 +62,7 @@ private:
     uint32_t _lastUpdate = 0;
     String _manufacture;
     String _device;
+    String _serial;
     size_t _numMppts;
 
     std::map<size_t, std::shared_ptr<MpptData>> _mpptData = std::map<size_t, std::shared_ptr<MpptData>>();

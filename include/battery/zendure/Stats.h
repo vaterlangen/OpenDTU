@@ -105,11 +105,21 @@ private:
         _device = std::move(device);
     }
 
-    auto getSolarCharger() {
-        auto mppt = SolarCharger.getSmartBufferBatteryStats();
-        if (mppt != nullptr && !_solarcharger_id.has_value()) {
-            _solarcharger_id = mppt->addDevice(*getManufacturer(), _device, ZENDURE_NUM_MPPTS);
+    std::shared_ptr<SolarChargers::SmartBufferBatteries::Stats> getSolarCharger() {
+        if (!getSerial() || !getManufacturer()) {
+            return nullptr;
         }
+
+        auto mppt = SolarCharger.getSmartBufferBatteryStats();
+        if (mppt == nullptr) {
+            _solarcharger_id.reset();
+            return nullptr;
+        }
+
+        if (!_solarcharger_id.has_value() || !mppt->verifyDevice(*_solarcharger_id, *getSerial())) {
+            _solarcharger_id = mppt->addDevice(*getManufacturer(), _device, *getSerial(), ZENDURE_NUM_MPPTS);
+        }
+
         return mppt;
     }
 
@@ -120,7 +130,7 @@ private:
         if (mppt == nullptr) {
             return;
         }
-        mppt->setMpptPower(*_solarcharger_id, num, static_cast<float>(power), millis());
+        mppt->setMpptPower(*_solarcharger_id, num, power, millis());
     }
 
     inline void updateSolarInputVoltage(const size_t num, const float voltage) {
@@ -128,7 +138,7 @@ private:
         if (mppt == nullptr) {
             return;
         }
-        mppt->setMpptVoltage(*_solarcharger_id, num, static_cast<float>(voltage), millis());
+        mppt->setMpptVoltage(*_solarcharger_id, num, voltage, millis());
     }
 
     inline void setSolarPower1(const uint16_t power) {
