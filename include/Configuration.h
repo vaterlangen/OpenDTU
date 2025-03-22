@@ -202,9 +202,7 @@ struct BATTERY_ZENDURE_CONFIG_T {
 using BatteryZendureConfig = struct BATTERY_ZENDURE_CONFIG_T;
 
 enum BatteryVoltageUnit { Volts = 0, DeciVolts = 1, CentiVolts = 2, MilliVolts = 3 };
-
 enum BatteryAmperageUnit { Amps = 0, MilliAmps = 1 };
-
 struct BATTERY_CONFIG_T {
     bool Enabled;
     bool VerboseLogging;

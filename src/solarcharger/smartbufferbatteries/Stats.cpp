@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
+#include <CRC.h>
 #include <solarcharger/smartbufferbatteries/Stats.h>
 #include <battery/Controller.h>
 #include <battery/zendure/Stats.h>
@@ -82,26 +83,31 @@ void Stats::getLiveViewData(JsonVariant& root, const boolean fullUpdate, const u
     }
 }
 
-void Stats::setMpptVoltage(const uint32_t id, const size_t num, const float voltage, const uint32_t lastUpdate) {
+void Stats::setMpptVoltage(std::optional<const uint32_t> id, const size_t num, const float voltage, const uint32_t lastUpdate) {
+    if (!id.has_value()) {
+        return;
+    }
+
     std::shared_ptr<DeviceData> device;
     try
     {
-        device = _deviceData.at(id);
+        device = _deviceData.at(*id);
         device->setMpptData(num, lastUpdate, std::nullopt, voltage);
         _lastUpdate = lastUpdate;
         _lastUpdateOutputVoltage = lastUpdate;
     }
-    catch(const std::out_of_range& ex)
-    {
-        return;
-    }
+    catch(const std::out_of_range& ex) {;}
 }
 
-void Stats::setMpptPower(const uint32_t id, const size_t num, const float power, const uint32_t lastUpdate) {
+void Stats::setMpptPower(std::optional<const uint32_t> id, const size_t num, const float power, const uint32_t lastUpdate) {
+    if (!id.has_value()) {
+        return;
+    }
+
     std::shared_ptr<DeviceData> device;
     try
     {
-        device = _deviceData.at(id);
+        device = _deviceData.at(*id);
         device->setMpptData(num, lastUpdate, power, std::nullopt);
         _lastUpdate = lastUpdate;
         _lastUpdateOutputPowerWatts = lastUpdate;
@@ -152,29 +158,57 @@ void DeviceData::setMpptData(const size_t num, const uint32_t lastUpdate, const 
 
 }
 
-uint32_t Stats::addDevice(const String& manufacture, const String& device, const String& serial, const size_t numMppts) {
-    // try to find existing entry
-    for (const auto& [key, d] : _deviceData) {
-        if (d->_serial == serial) {
-            return key;
-        }
+std::optional<uint32_t> Stats::addDevice(const String& manufacture, const String& device, const String& serial, const size_t numMppts) {
+    if (numMppts < 1 || serial.length() < 5 || device.isEmpty() || manufacture.isEmpty()) {
+        return std::nullopt;
     }
 
-    // otherwise add new one
-    _deviceData[_nextIndex] = std::make_shared<DeviceData>(manufacture, device, serial, numMppts);
+    // calculate CRC32 of device data to generate an (almost) unique idenitfier to be used as key in the map
+    const String name = manufacture + device + serial + String(numMppts);
+    CRC32 crc(CRC32_POLYNOME, CRC32_INITIAL, CRC32_XOR_OUT, false, false);
+    crc.add(reinterpret_cast<const uint8_t*>(name.c_str()), name.length());
+    const uint32_t hash = crc.calc();
 
-    return _nextIndex++;
-}
-
-bool Stats::verifyDevice(const uint32_t id, const String& serial) {
+    // check if the device already exits
     try
     {
-        return _deviceData.at(id)->_serial == serial;
+        auto d = _deviceData.at(hash);
+
+        // if device found is the same, return the hash
+        if (d->_numMppts == numMppts &&
+            d->_serial == serial &&
+            d->_manufacture == manufacture &&
+            d->_device == device
+        ) {
+            return hash;
+        }
+
+        // otherwise remove from map
+        _deviceData.erase(hash);
     }
-    catch(const std::out_of_range& ex)
-    {
+    catch(const std::out_of_range& ex) {;}
+
+    // if no device found for our "hash", add a new one
+    _deviceData[hash] = std::make_shared<DeviceData>(manufacture, device, serial, numMppts);
+    return hash;
+}
+
+bool Stats::hasDevice(std::optional<const uint32_t> id) {
+    return id.has_value() ? _deviceData.count(*id) : false;
+}
+
+bool Stats::verifyDevice(std::optional<const uint32_t> id, const String& serial) {
+    if (!id.has_value()) {
         return false;
     }
+
+    try
+    {
+        return _deviceData.at(*id)->_serial == serial;
+    }
+    catch(const std::out_of_range& ex) {;}
+
+    return false;
 }
 
 }; // namespace SolarChargers::SmartBufferBatteries
