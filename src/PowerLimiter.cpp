@@ -181,7 +181,7 @@ void PowerLimiterClass::loop()
 
     for (auto const& upInv : _inverters) {
         auto oStatsMillis = upInv->getLatestStatsMillis();
-        if (!oStatsMillis) {
+        if (!oStatsMillis && upInv->isReachable()) {
             return announceStatus(Status::InverterStatsPending);
         }
 
