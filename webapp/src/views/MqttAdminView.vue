@@ -181,6 +181,12 @@
                         </select>
                     </div>
                 </div>
+
+                <InputElement
+                    :label="$t('mqttadmin.EnableRetain')"
+                    v-model="mqttConfigList.mqtt_lwt_retain"
+                    type="checkbox"
+                />
             </CardElement>
 
             <CardElement

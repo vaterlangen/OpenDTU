@@ -88,6 +88,7 @@ bool ConfigurationClass::write()
     mqtt_lwt["value_online"] = config.Mqtt.Lwt.Value_Online;
     mqtt_lwt["value_offline"] = config.Mqtt.Lwt.Value_Offline;
     mqtt_lwt["qos"] = config.Mqtt.Lwt.Qos;
+    mqtt_lwt["retain"] = config.Mqtt.Lwt.Retain;
 
     JsonObject mqtt_tls = mqtt["tls"].to<JsonObject>();
     mqtt_tls["enabled"] = config.Mqtt.Tls.Enabled;
@@ -277,6 +278,7 @@ bool ConfigurationClass::read()
     strlcpy(config.Mqtt.Lwt.Value_Online, mqtt_lwt["value_online"] | MQTT_LWT_ONLINE, sizeof(config.Mqtt.Lwt.Value_Online));
     strlcpy(config.Mqtt.Lwt.Value_Offline, mqtt_lwt["value_offline"] | MQTT_LWT_OFFLINE, sizeof(config.Mqtt.Lwt.Value_Offline));
     config.Mqtt.Lwt.Qos = mqtt_lwt["qos"] | MQTT_LWT_QOS;
+    config.Mqtt.Lwt.Retain = mqtt_lwt["retain"] | MQTT_LWT_RETAIN;
 
     JsonObject mqtt_tls = mqtt["tls"];
     config.Mqtt.Tls.Enabled = mqtt_tls["enabled"] | MQTT_TLS;

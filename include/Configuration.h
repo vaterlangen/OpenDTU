@@ -115,6 +115,7 @@ struct CONFIG_T {
             char Value_Online[MQTT_MAX_LWTVALUE_STRLEN + 1];
             char Value_Offline[MQTT_MAX_LWTVALUE_STRLEN + 1];
             uint8_t Qos;
+            bool Retain;
         } Lwt;
 
         struct {
